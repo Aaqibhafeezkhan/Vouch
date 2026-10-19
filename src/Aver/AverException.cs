@@ -1,18 +1,10 @@
 using Aver.Sdk;
 
-namespace Aver
-{
-    public sealed class AverException : Exception, IAssertionException
-    {
-        public AverException(string message) : base(message)
-        {
-        }
-    }
-}
+namespace Aver;
 
-namespace Aver.Sdk
+public sealed class AverException : Exception, IAssertionException
 {
-    internal interface IAssertionException
+    public AverException(string message) : base(message)
     {
     }
 }
