@@ -4,3 +4,4 @@ obj/
 .vs/
 TestResults/
 .superpowers/
+tests/Aver.ApiApproval.Tests/Aver.received.txt

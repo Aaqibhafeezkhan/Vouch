@@ -1,0 +1,494 @@
+[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Aver.Tests")]
+namespace Aver
+{
+    public readonly struct ActionAssertions
+    {
+        public System.Action? Subject { get; }
+        public Aver.AndConstraint<Aver.ActionAssertions> NotThrow() { }
+        public Aver.AndConstraint<Aver.ActionAssertions> NotThrow(string because) { }
+        public Aver.ExceptionAssertions<TException> Throw<TException>()
+            where TException : System.Exception { }
+        public Aver.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+    }
+    public readonly struct AndConstraint<TAssertions>
+    {
+        public AndConstraint(TAssertions and) { }
+        public TAssertions And { get; }
+    }
+    public readonly struct AndWhichConstraint<TAssertions, TWhich>
+    {
+        public AndWhichConstraint(TAssertions and, TWhich which) { }
+        public TAssertions And { get; }
+        public TWhich Subject { get; }
+        public TWhich Which { get; }
+        public TWhich WhoseValue { get; }
+    }
+    public static class ArgumentExceptionExtensions
+    {
+        public static Aver.ExceptionAssertions<T> WithParameterName<T>(this Aver.ExceptionAssertions<T> assertions, string paramName)
+            where T : System.ArgumentException { }
+        public static System.Threading.Tasks.Task<Aver.ExceptionAssertions<T>> WithParameterName<T>(this System.Threading.Tasks.Task<Aver.ExceptionAssertions<T>> task, string paramName)
+            where T : System.ArgumentException { }
+    }
+    public readonly struct AsyncFunctionAssertions
+    {
+        public System.Func<System.Threading.Tasks.Task>? Subject { get; }
+        public System.Threading.Tasks.Task NotThrowAsync() { }
+        public System.Threading.Tasks.Task NotThrowAsync(string because) { }
+        public System.Threading.Tasks.Task<Aver.ExceptionAssertions<TException>> ThrowAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Aver.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
+            where TException : System.Exception { }
+    }
+    public readonly struct AsyncFunctionAssertions<T>
+    {
+        public System.Func<System.Threading.Tasks.Task<T>>? Subject { get; }
+        public System.Threading.Tasks.Task<Aver.AndWhichConstraint<Aver.AsyncFunctionAssertions<T>, T>> NotThrowAsync() { }
+        public System.Threading.Tasks.Task<Aver.AndWhichConstraint<Aver.AsyncFunctionAssertions<T>, T>> NotThrowAsync(string because) { }
+        public System.Threading.Tasks.Task<Aver.ExceptionAssertions<TException>> ThrowAsync<TException>()
+            where TException : System.Exception { }
+        public System.Threading.Tasks.Task<Aver.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
+            where TException : System.Exception { }
+    }
+    public sealed class AverException : System.Exception
+    {
+        public AverException(string message) { }
+    }
+    public readonly struct BooleanAssertions
+    {
+        public bool Subject { get; }
+        public Aver.AndConstraint<Aver.BooleanAssertions> Be(bool expected) { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> Be(bool expected, string because) { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> BeFalse() { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> BeFalse(string because) { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> BeTrue() { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> BeTrue(string because) { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> NotBe(bool unexpected) { }
+        public Aver.AndConstraint<Aver.BooleanAssertions> NotBe(bool unexpected, string because) { }
+    }
+    public abstract class CollectionAssertionsBase<T, TSelf>
+        where TSelf : Aver.CollectionAssertionsBase<T, TSelf>
+    {
+        protected CollectionAssertionsBase(System.Collections.Generic.IEnumerable<T>? subject, string? expression) { }
+        protected bool IsNull { get; }
+        protected System.Collections.Generic.IReadOnlyList<T> Items { get; }
+        protected string Name { get; }
+        protected System.Collections.Generic.IEnumerable<T>? Source { get; }
+        public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
+        public Aver.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
+        protected Aver.AndConstraint<TSelf> And() { }
+        public Aver.AndConstraint<TSelf> BeEmpty() { }
+        public Aver.AndConstraint<TSelf> BeEmpty(string because) { }
+        public Aver.AndConstraint<TSelf> BeEquivalentTo(params T[] expectation) { }
+        public Aver.AndConstraint<TSelf> BeEquivalentTo(T[] expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation) { }
+        public Aver.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<TSelf> BeEquivalentTo<TExpectation>(System.Collections.Generic.IEnumerable<TExpectation> expectation, string because) { }
+        public Aver.AndConstraint<TSelf> BeInAscendingOrder() { }
+        public Aver.AndConstraint<TSelf> BeInAscendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
+        public Aver.AndConstraint<TSelf> BeInAscendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
+        public Aver.AndConstraint<TSelf> BeInDescendingOrder() { }
+        public Aver.AndConstraint<TSelf> BeInDescendingOrder(System.Collections.Generic.IComparer<T> comparer) { }
+        public Aver.AndConstraint<TSelf> BeInDescendingOrder<TKey>(System.Func<T, TKey> keySelector) { }
+        public Aver.AndConstraint<TSelf> BeNull() { }
+        public Aver.AndConstraint<TSelf> BeNull(string because) { }
+        public Aver.AndConstraint<TSelf> BeNullOrEmpty() { }
+        public Aver.AndConstraint<TSelf> BeNullOrEmpty(string because) { }
+        public Aver.AndConstraint<TSelf> BeSameAs(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Aver.AndConstraint<TSelf> BeSubsetOf(System.Collections.Generic.IEnumerable<T> superset) { }
+        public Aver.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Aver.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Aver.AndWhichConstraint<TSelf, T> Contain(T expected) { }
+        public Aver.AndConstraint<TSelf> Contain(params T[] expected) { }
+        public Aver.AndConstraint<TSelf> Contain(System.Collections.Generic.IEnumerable<T> expected, string because) { }
+        public Aver.AndWhichConstraint<TSelf, T> Contain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Aver.AndWhichConstraint<TSelf, T> Contain(T expected, string because) { }
+        public Aver.AndWhichConstraint<TSelf, T> ContainSingle() { }
+        public Aver.AndWhichConstraint<TSelf, T> ContainSingle(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Aver.AndWhichConstraint<TSelf, T> ContainSingle(string because) { }
+        public Aver.AndWhichConstraint<TSelf, T> ContainSingle(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Aver.AndConstraint<TSelf> EndWith(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Aver.AndConstraint<TSelf> Equal(System.Collections.Generic.IEnumerable<T> expected) { }
+        public Aver.AndConstraint<TSelf> Equal(params T[] expected) { }
+        public Aver.AndConstraint<TSelf> Equal(System.Collections.Generic.IEnumerable<T> expected, string because) { }
+        public Aver.AndConstraint<TSelf> HaveCount(int expected) { }
+        public Aver.AndConstraint<TSelf> HaveCount(int expected, string because) { }
+        public Aver.AndConstraint<TSelf> HaveCountGreaterThan(int expected) { }
+        public Aver.AndConstraint<TSelf> HaveCountGreaterThanOrEqualTo(int expected) { }
+        public Aver.AndConstraint<TSelf> NotBeEmpty() { }
+        public Aver.AndConstraint<TSelf> NotBeEmpty(string because) { }
+        public Aver.AndConstraint<TSelf> NotBeNull() { }
+        public Aver.AndConstraint<TSelf> NotBeNull(string because) { }
+        public Aver.AndConstraint<TSelf> NotContain(System.Collections.Generic.IEnumerable<T> unexpected) { }
+        public Aver.AndConstraint<TSelf> NotContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Aver.AndConstraint<TSelf> NotContain(T unexpected) { }
+        public Aver.AndConstraint<TSelf> NotContain(System.Collections.Generic.IEnumerable<T> unexpected, string because) { }
+        public Aver.AndConstraint<TSelf> NotContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Aver.AndConstraint<TSelf> NotContain(T unexpected, string because) { }
+        public Aver.AndConstraint<TSelf> NotContainEquivalentOf<TExpectation>(TExpectation unexpected) { }
+        public Aver.AndConstraint<TSelf> NotEqual(System.Collections.Generic.IEnumerable<T> unexpected) { }
+        public Aver.AndConstraint<TSelf> NotIntersectWith(System.Collections.Generic.IEnumerable<T> other) { }
+        public Aver.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Aver.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Aver.AndConstraint<TSelf> OnlyHaveUniqueItems() { }
+        protected System.Collections.Generic.IReadOnlyList<T> Required(string expectation) { }
+        protected static string HasTail(System.Collections.Generic.IReadOnlyList<T> items) { }
+        protected static string Listing(System.Collections.Generic.IReadOnlyList<T> items, System.Collections.Generic.List<int>? indexes = null) { }
+        protected static string NotFound(System.Collections.Generic.IReadOnlyList<T> items) { }
+        protected static string Plural(int count) { }
+    }
+    public static class ComparableValueAssertions
+    {
+        public static Aver.AndConstraint<Aver.ValueAssertions<T>> BeGreaterThan<T>(this Aver.ValueAssertions<T> assertions, T expected)
+            where T :  struct, System.IComparable<T> { }
+        public static Aver.AndConstraint<Aver.ValueAssertions<T>> BeGreaterThanOrEqualTo<T>(this Aver.ValueAssertions<T> assertions, T expected)
+            where T :  struct, System.IComparable<T> { }
+        public static Aver.AndConstraint<Aver.ValueAssertions<T>> BeLessThan<T>(this Aver.ValueAssertions<T> assertions, T expected)
+            where T :  struct, System.IComparable<T> { }
+        public static Aver.AndConstraint<Aver.ValueAssertions<T>> BeLessThanOrEqualTo<T>(this Aver.ValueAssertions<T> assertions, T expected)
+            where T :  struct, System.IComparable<T> { }
+        public static Aver.AndConstraint<Aver.ValueAssertions<System.Guid>> NotBeEmpty(this Aver.ValueAssertions<System.Guid> assertions) { }
+    }
+    public readonly struct DateOnlyAssertions
+    {
+        public System.DateOnly Subject { get; }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> Be(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeAfter(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeBefore(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.DateOnlyAssertions> NotBe(System.DateOnly unexpected) { }
+    }
+    public readonly struct DateTimeAssertions
+    {
+        public System.DateTime Subject { get; }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> Be(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeAfter(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeBefore(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.DateTimeAssertions> NotBe(System.DateTime unexpected) { }
+    }
+    public readonly struct DateTimeOffsetAssertions
+    {
+        public System.DateTimeOffset Subject { get; }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> Be(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.DateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
+    }
+    public sealed class DictionaryAssertions<TKey, TValue> : Aver.CollectionAssertionsBase<System.Collections.Generic.KeyValuePair<TKey, TValue>, Aver.DictionaryAssertions<TKey, TValue>>
+        where TKey :  notnull
+    {
+        public Aver.AndWhichConstraint<Aver.DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected) { }
+        public Aver.AndWhichConstraint<Aver.DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected, string because) { }
+        public Aver.AndConstraint<Aver.DictionaryAssertions<TKey, TValue>> ContainKeys(params TKey[] expected) { }
+        public Aver.AndConstraint<Aver.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected) { }
+        public Aver.AndConstraint<Aver.DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because) { }
+    }
+    public sealed class EquivalencyOptions
+    {
+        public EquivalencyOptions() { }
+        public Aver.EquivalencyOptions WithStrictOrdering() { }
+    }
+    public sealed class ExceptionAssertions<TException>
+        where TException : System.Exception
+    {
+        public Aver.ExceptionAssertions<TException> And { get; }
+        public TException Subject { get; }
+        public TException Which { get; }
+        public Aver.ExceptionAssertions<TException> WithMessage(string pattern) { }
+    }
+    public static class ExceptionTaskExtensions
+    {
+        public static System.Threading.Tasks.Task<Aver.ExceptionAssertions<T>> WithMessage<T>(this System.Threading.Tasks.Task<Aver.ExceptionAssertions<T>> task, string pattern)
+            where T : System.Exception { }
+    }
+    public static class FluentActions
+    {
+        public static System.Func<System.Threading.Tasks.Task> Awaiting(System.Func<System.Threading.Tasks.Task> action) { }
+        public static System.Func<System.Threading.Tasks.Task<T>> Awaiting<T>(System.Func<System.Threading.Tasks.Task<T>> func) { }
+        public static System.Action Invoking(System.Action action) { }
+        public static System.Func<T> Invoking<T>(System.Func<T> func) { }
+    }
+    public readonly struct FunctionAssertions<T>
+    {
+        public System.Func<T>? Subject { get; }
+        public Aver.AndConstraint<Aver.FunctionAssertions<T>> NotThrow() { }
+        public Aver.AndConstraint<Aver.FunctionAssertions<T>> NotThrow(string because) { }
+        public Aver.ExceptionAssertions<TException> Throw<TException>()
+            where TException : System.Exception { }
+        public Aver.ExceptionAssertions<TException> Throw<TException>(string because)
+            where TException : System.Exception { }
+    }
+    public sealed class GenericCollectionAssertions<T> : Aver.CollectionAssertionsBase<T, Aver.GenericCollectionAssertions<T>> { }
+    public static class InvokingExtensions
+    {
+        public static System.Action Invoking<T>(this T subject, System.Action<T> action) { }
+        public static System.Func<TResult> Invoking<T, TResult>(this T subject, System.Func<T, TResult> func) { }
+    }
+    public readonly struct NullableBooleanAssertions
+    {
+        public bool? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> Be(bool expected) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> Be(bool expected, string because) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeFalse() { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeFalse(string because) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeNull(string because) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeTrue() { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> BeTrue(string because) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> NotBe(bool unexpected) { }
+        public Aver.AndConstraint<Aver.NullableBooleanAssertions> NotBe(bool unexpected, string because) { }
+        public Aver.AndWhichConstraint<Aver.NullableBooleanAssertions, bool> NotBeNull() { }
+        public Aver.AndWhichConstraint<Aver.NullableBooleanAssertions, bool> NotBeNull(string because) { }
+    }
+    public readonly struct NullableDateOnlyAssertions
+    {
+        public System.DateOnly? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> Be(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeAfter(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeBefore(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeOnOrAfter(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> BeOnOrBefore(System.DateOnly expected) { }
+        public Aver.AndConstraint<Aver.NullableDateOnlyAssertions> NotBe(System.DateOnly unexpected) { }
+        public Aver.AndWhichConstraint<Aver.NullableDateOnlyAssertions, System.DateOnly> NotBeNull() { }
+    }
+    public readonly struct NullableDateTimeAssertions
+    {
+        public System.DateTime? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> Be(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeAfter(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeBefore(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeCloseTo(System.DateTime expected, System.TimeSpan precision) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeOnOrAfter(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> BeOnOrBefore(System.DateTime expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeAssertions> NotBe(System.DateTime unexpected) { }
+        public Aver.AndWhichConstraint<Aver.NullableDateTimeAssertions, System.DateTime> NotBeNull() { }
+    }
+    public readonly struct NullableDateTimeOffsetAssertions
+    {
+        public System.DateTimeOffset? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> Be(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeAfter(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeBefore(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeCloseTo(System.DateTimeOffset expected, System.TimeSpan precision) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeOnOrAfter(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> BeOnOrBefore(System.DateTimeOffset expected) { }
+        public Aver.AndConstraint<Aver.NullableDateTimeOffsetAssertions> NotBe(System.DateTimeOffset unexpected) { }
+        public Aver.AndWhichConstraint<Aver.NullableDateTimeOffsetAssertions, System.DateTimeOffset> NotBeNull() { }
+    }
+    public static class NullableNumericApproximationExtensions
+    {
+        public static Aver.AndConstraint<Aver.NullableNumericAssertions<decimal>> BeApproximately(this Aver.NullableNumericAssertions<decimal> assertions, decimal expected, decimal precision) { }
+        public static Aver.AndConstraint<Aver.NullableNumericAssertions<double>> BeApproximately(this Aver.NullableNumericAssertions<double> assertions, double expected, double precision) { }
+        public static Aver.AndConstraint<Aver.NullableNumericAssertions<float>> BeApproximately(this Aver.NullableNumericAssertions<float> assertions, float expected, float precision) { }
+    }
+    public readonly struct NullableNumericAssertions<T>
+        where T :  struct, System.Numerics.INumber<T>
+    {
+        public T? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> Be(T expected) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> Be(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeGreaterThan(T expected) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeGreaterThan(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeGreaterThanOrEqualTo(T expected) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeInRange(T min, T max) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeLessThan(T expected) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeLessThanOrEqualTo(T expected) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BeOneOf(params T[] validValues) { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> BePositive() { }
+        public Aver.AndConstraint<Aver.NullableNumericAssertions<T>> NotBe(T unexpected) { }
+        public Aver.AndWhichConstraint<Aver.NullableNumericAssertions<T>, T> NotBeNull() { }
+    }
+    public readonly struct NullableValueAssertions<T>
+        where T :  struct
+    {
+        public T? Subject { get; }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> Be(T expected) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> Be(T? expected) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> Be(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> Be(T? expected, string because) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> BeNull() { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> BeOneOf(params T[] validValues) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> NotBe(T unexpected) { }
+        public Aver.AndConstraint<Aver.NullableValueAssertions<T>> NotBe(T unexpected, string because) { }
+        public Aver.AndWhichConstraint<Aver.NullableValueAssertions<T>, T> NotBeNull() { }
+    }
+    public static class NumericApproximationExtensions
+    {
+        public static Aver.AndConstraint<Aver.NumericAssertions<decimal>> BeApproximately(this Aver.NumericAssertions<decimal> assertions, decimal expected, decimal precision) { }
+        public static Aver.AndConstraint<Aver.NumericAssertions<double>> BeApproximately(this Aver.NumericAssertions<double> assertions, double expected, double precision) { }
+        public static Aver.AndConstraint<Aver.NumericAssertions<float>> BeApproximately(this Aver.NumericAssertions<float> assertions, float expected, float precision) { }
+    }
+    public readonly struct NumericAssertions<T>
+        where T :  struct, System.Numerics.INumber<T>
+    {
+        public T Subject { get; }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> Be(T expected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> Be(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeGreaterThan(T expected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeGreaterThan(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeInRange(T min, T max) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeInRange(T min, T max, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeLessThan(T expected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeLessThan(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeLessThanOrEqualTo(T expected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeLessThanOrEqualTo(T expected, string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BeOneOf(params T[] validValues) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BePositive() { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> BePositive(string because) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> NotBe(T unexpected) { }
+        public Aver.AndConstraint<Aver.NumericAssertions<T>> NotBe(T unexpected, string because) { }
+    }
+    public readonly struct ObjectAssertions
+    {
+        public object? Subject { get; }
+        public Aver.AndConstraint<Aver.ObjectAssertions> Be(object? expected) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> Be(object? expected, string because) { }
+        public Aver.AndWhichConstraint<Aver.ObjectAssertions, T> BeAssignableTo<T>() { }
+        public Aver.AndWhichConstraint<Aver.ObjectAssertions, T> BeAssignableTo<T>(string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeNull(string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeOfType(System.Type expectedType) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeOfType(System.Type expectedType, string because) { }
+        public Aver.AndWhichConstraint<Aver.ObjectAssertions, T> BeOfType<T>() { }
+        public Aver.AndWhichConstraint<Aver.ObjectAssertions, T> BeOfType<T>(string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeOneOf(params object?[] validValues) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> BeSameAs(object? expected) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> Match<T>(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> Match<T>(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBe(object? unexpected) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBe(object? unexpected, string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBeAssignableTo<T>() { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBeNull() { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBeNull(string because) { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBeOfType<T>() { }
+        public Aver.AndConstraint<Aver.ObjectAssertions> NotBeSameAs(object? unexpected) { }
+    }
+    public static class ShouldExtensions
+    {
+        public static Aver.ActionAssertions Should(this System.Action? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.DateOnlyAssertions Should(this System.DateOnly subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableDateOnlyAssertions Should(this System.DateOnly? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.DateTimeAssertions Should(this System.DateTime subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableDateTimeAssertions Should(this System.DateTime? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.DateTimeOffsetAssertions Should(this System.DateTimeOffset subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableDateTimeOffsetAssertions Should(this System.DateTimeOffset? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.AsyncFunctionAssertions Should(this System.Func<System.Threading.Tasks.Task>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.BooleanAssertions Should(this bool subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableBooleanAssertions Should(this bool? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<byte> Should(this byte subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<byte> Should(this byte? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<decimal> Should(this decimal subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<decimal> Should(this decimal? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<double> Should(this double subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<double> Should(this double? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<float> Should(this float subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<float> Should(this float? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<int> Should(this int subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<int> Should(this int? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<long> Should(this long subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<long> Should(this long? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.ObjectAssertions Should(this object? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NumericAssertions<short> Should(this short subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.NullableNumericAssertions<short> Should(this short? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.StringAssertions Should(this string? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.GenericCollectionAssertions<T> Should<T>(this System.Collections.Generic.IEnumerable<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.AsyncFunctionAssertions<T> Should<T>(this System.Func<System.Threading.Tasks.Task<T>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.FunctionAssertions<T> Should<T>(this System.Func<T>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null) { }
+        public static Aver.ValueAssertions<T> Should<T>(this T subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
+            where T :  struct { }
+        public static Aver.NullableValueAssertions<T> Should<T>(this T? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
+            where T :  struct { }
+        public static Aver.DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<TKey, TValue>>? subject, [System.Runtime.CompilerServices.CallerArgumentExpression("subject")] string? expression = null)
+            where TKey :  notnull { }
+    }
+    public readonly struct StringAssertions
+    {
+        public string? Subject { get; }
+        public Aver.AndConstraint<Aver.StringAssertions> Be(string? expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> Be(string? expected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeEmpty() { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeEmpty(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeEquivalentTo(string? expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeEquivalentTo(string? expected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeNull() { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeNull(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeNullOrEmpty() { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeNullOrEmpty(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeOneOf(params string?[] validValues) { }
+        public Aver.AndConstraint<Aver.StringAssertions> BeOneOf(System.Collections.Generic.IEnumerable<string?> validValues, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> Contain(string expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> Contain(string expected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> EndWith(string expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> EndWith(string expected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> HaveLength(int expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> HaveLength(int expected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> Match(string wildcardPattern) { }
+        public Aver.AndConstraint<Aver.StringAssertions> Match(string wildcardPattern, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> MatchRegex(string pattern) { }
+        public Aver.AndConstraint<Aver.StringAssertions> MatchRegex(string pattern, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBe(string? unexpected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBe(string? unexpected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeEmpty() { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeEmpty(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNull() { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNull(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNullOrEmpty() { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNullOrEmpty(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNullOrWhiteSpace() { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotBeNullOrWhiteSpace(string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotContain(string unexpected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotContain(string unexpected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotContainEquivalentOf(string unexpected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotContainEquivalentOf(string unexpected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotStartWith(string unexpected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> NotStartWith(string unexpected, string because) { }
+        public Aver.AndConstraint<Aver.StringAssertions> StartWith(string expected) { }
+        public Aver.AndConstraint<Aver.StringAssertions> StartWith(string expected, string because) { }
+    }
+    public readonly struct ValueAssertions<T>
+        where T :  struct
+    {
+        public T Subject { get; }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> Be(T expected) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> Be(T expected, string because) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, System.Func<Aver.EquivalencyOptions, Aver.EquivalencyOptions> configure) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> BeOneOf(params T[] validValues) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> NotBe(T unexpected) { }
+        public Aver.AndConstraint<Aver.ValueAssertions<T>> NotBe(T unexpected, string because) { }
+    }
+}
