@@ -114,17 +114,7 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
-    public static DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this Dictionary<TKey, TValue>? subject,
-        [CallerArgumentExpression(nameof(subject))] string? expression = null)
-        where TKey : notnull
-        => new((IDictionary<TKey, TValue>?)subject, expression);
-
-    public static DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this IDictionary<TKey, TValue>? subject,
-        [CallerArgumentExpression(nameof(subject))] string? expression = null)
-        where TKey : notnull
-        => new(subject, expression);
-
-    public static DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this IReadOnlyDictionary<TKey, TValue>? subject,
+    public static DictionaryAssertions<TKey, TValue> Should<TKey, TValue>(this IEnumerable<KeyValuePair<TKey, TValue>>? subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         where TKey : notnull
         => new(subject, expression);

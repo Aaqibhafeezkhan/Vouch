@@ -101,7 +101,7 @@ public class CollectionAssertionsTests
     [Fact] public void HaveCount_passes() => new[] { 1, 2 }.Should().HaveCount(2);
     [Fact] public void HaveCount_fails() => Assert.Throws<AverException>(() => new[] { 1 }.Should().HaveCount(2));
     [Fact] public void HaveCount_message() { var xs = new[] { "a", "b" }; Assert.Equal("Expected xs to contain 3 items, but found 2:\n  [0] \"a\"\n  [1] \"b\"", Message(() => xs.Should().HaveCount(3))); }
-    [Fact] public void HaveCount_singular_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain 1 item, but found 0:", Message(() => xs.Should().HaveCount(1))); }
+    [Fact] public void HaveCount_singular_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain 1 item, but found 0.", Message(() => xs.Should().HaveCount(1))); }
     [Fact]
     public void Message_lists_items_and_cuts_at_ten()
     {
@@ -153,7 +153,7 @@ public class CollectionAssertionsTests
     [Fact] public void ContainSingle_passes() => new[] { 1 }.Should().ContainSingle();
     [Fact] public void ContainSingle_fails() => Assert.Throws<AverException>(() => new[] { 1, 2 }.Should().ContainSingle());
     [Fact] public void ContainSingle_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain a single item, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().ContainSingle())); }
-    [Fact] public void ContainSingle_message_on_empty() { var xs = new int[0]; Assert.Equal("Expected xs to contain a single item, but found 0:", Message(() => xs.Should().ContainSingle())); }
+    [Fact] public void ContainSingle_message_on_empty() { var xs = new int[0]; Assert.Equal("Expected xs to contain a single item, but found 0.", Message(() => xs.Should().ContainSingle())); }
     [Fact] public void ContainSingle_Which_is_the_item() => Assert.Equal("FBS", new[] { new Row("FBS", 1) }.Should().ContainSingle().Which.Code);
     [Fact] public void ContainSingle_Subject_is_the_item() => Assert.Equal(1, new[] { 1 }.Should().ContainSingle().Subject);
     [Fact] public void ContainSingle_predicate_passes() => Assert.Equal("CREA", Rows.Should().ContainSingle(r => r.Qty == 2).Which.Code);
@@ -246,4 +246,35 @@ public class CollectionAssertionsTests
     // chaining
 
     [Fact] public void And_chains_back_to_the_assertions() => new[] { 1, 2 }.Should().HaveCount(2).And.Contain(1).And.NotContain(3);
+
+    // empty subjects end with a period
+
+    [Fact] public void Contain_item_on_empty_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain 5, but it was empty.", Message(() => xs.Should().Contain(5))); }
+    [Fact] public void Contain_predicate_on_empty_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain an item matching (x > 1), but it was empty.", Message(() => xs.Should().Contain(x => x > 1))); }
+    [Fact] public void Contain_items_on_empty_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain all of [1, 2], but it is missing [1, 2].", Message(() => xs.Should().Contain(1, 2))); }
+    [Fact] public void HaveCountGreaterThan_on_empty_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain more than 1 item, but found 0.", Message(() => xs.Should().HaveCountGreaterThan(1))); }
+    [Fact] public void ContainSingle_predicate_on_empty_message() { var xs = new int[0]; Assert.Equal("Expected xs to contain a single item matching (x == 2), but found 0.", Message(() => xs.Should().ContainSingle(x => x == 2))); }
+
+    // lazy materialisation
+
+    [Fact]
+    public void Failure_on_lazy_set_shows_items_and_enumerates_once()
+    {
+        var calls = 0;
+        IEnumerable<int> Gen() { calls++; yield return 1; }
+        var gen = Gen();
+        var a = gen.Should();
+        Assert.Equal("Expected gen to contain 2 items, but found 1:\n  [0] 1", Message(() => a.HaveCount(2)));
+        a.Contain(1);
+        Assert.Equal(1, calls);
+    }
+
+    // non-comparable items
+
+    private sealed class Opaque { }
+
+    [Fact] public void BeInAscendingOrder_non_comparable_fails_cleanly() { var xs = new[] { new Opaque(), new Opaque() }; Assert.Equal("Expected xs to be in ascending order, but Opaque is not comparable.", Message(() => xs.Should().BeInAscendingOrder())); }
+    [Fact] public void BeInDescendingOrder_non_comparable_fails_cleanly() { var xs = new[] { new Opaque(), new Opaque() }; Assert.Equal("Expected xs to be in descending order, but Opaque is not comparable.", Message(() => xs.Should().BeInDescendingOrder())); }
+    [Fact] public void BeInAscendingOrder_non_comparable_key_fails_cleanly() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to be in ascending order, but Opaque is not comparable.", Message(() => xs.Should().BeInAscendingOrder(_ => new Opaque()))); }
+    [Fact] public void BeInDescendingOrder_non_comparable_key_fails_cleanly() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to be in descending order, but Opaque is not comparable.", Message(() => xs.Should().BeInDescendingOrder(_ => new Opaque()))); }
 }

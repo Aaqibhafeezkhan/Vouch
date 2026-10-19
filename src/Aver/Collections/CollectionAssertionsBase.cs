@@ -8,19 +8,22 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     where TSelf : CollectionAssertionsBase<T, TSelf>
 {
     private readonly string? _expression;
+    private IReadOnlyList<T>? _list;
 
     protected CollectionAssertionsBase(IEnumerable<T>? subject, string? expression)
     {
-        Subject = subject switch
-        {
-            null => null,
-            IReadOnlyList<T> list => list,
-            _ => subject.ToList(),
-        };
+        Source = subject;
+        _list = subject as IReadOnlyList<T>;
         _expression = expression;
     }
 
-    public IReadOnlyList<T>? Subject { get; }
+    public IReadOnlyList<T>? Subject => Source is null ? null : Items;
+
+    protected IEnumerable<T>? Source { get; }
+
+    protected bool IsNull => Source is null;
+
+    protected IReadOnlyList<T> Items => _list ??= Source!.ToList();
 
     protected string Name => Fail.Name(_expression);
 
@@ -29,12 +32,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     protected IReadOnlyList<T> Required(string expectation)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull(expectation);
         }
 
-        return Subject;
+        return Items;
     }
 
     protected AndConstraint<TSelf> And() => new((TSelf)this);
@@ -44,7 +47,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var items = Required("to be empty");
         if (items.Count != 0)
         {
-            Fail.With($"Expected {Name} to be empty, but found {Plural(items.Count)}:{Lines(items)}");
+            Fail.With($"Expected {Name} to be empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
         return And();
@@ -62,9 +65,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> BeNull()
     {
-        if (Subject is not null)
+        if (!IsNull)
         {
-            Fail.With($"Expected {Name} to be null, but found {Formatter.Format(Subject)}.");
+            Fail.With($"Expected {Name} to be null, but found {Formatter.Format(Items)}.");
         }
 
         return And();
@@ -72,7 +75,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> NotBeNull()
     {
-        if (Subject is null)
+        if (IsNull)
         {
             Fail.With($"Expected {Name} not to be null, but it was.");
         }
@@ -82,15 +85,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> HaveCount(int expected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain {Plural(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         if (items.Count != expected)
         {
-            Fail.With($"Expected {Name} to contain {Plural(expected)}, but found {items.Count}:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
         return And();
@@ -98,15 +101,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> HaveCountGreaterThan(int expected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain more than {Plural(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         if (items.Count <= expected)
         {
-            Fail.With($"Expected {Name} to contain more than {Plural(expected)}, but found {items.Count}:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain more than {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
         return And();
@@ -114,15 +117,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> HaveCountGreaterThanOrEqualTo(int expected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain at least {Plural(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         if (items.Count < expected)
         {
-            Fail.With($"Expected {Name} to contain at least {Plural(expected)}, but found {items.Count}:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain at least {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
         return And();
@@ -130,16 +133,16 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndWhichConstraint<TSelf, T> Contain(T expected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain {Formatter.Format(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         var index = IndexOf(items, expected);
         if (index < 0)
         {
-            Fail.With($"Expected {Name} to contain {Formatter.Format(expected)}, but it did not. It has:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain {Formatter.Format(expected)}, {NotFound(items)}");
         }
 
         return new((TSelf)this, items[index]);
@@ -159,12 +162,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     private AndConstraint<TSelf> ContainAll(IReadOnlyList<T> expected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain all of {Formatter.Format(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         List<T>? missing = null;
         for (var i = 0; i < expected.Count; i++)
         {
@@ -176,7 +179,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
         if (missing is not null)
         {
-            Fail.With($"Expected {Name} to contain all of {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}. It has:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain all of {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(items)}");
         }
 
         return And();
@@ -185,12 +188,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndWhichConstraint<TSelf, T> Contain(Expression<Func<T, bool>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain an item matching {predicate.Body}");
         }
 
-        var items = Subject;
+        var items = Items;
         var match = predicate.Compile();
         for (var i = 0; i < items.Count; i++)
         {
@@ -200,18 +203,18 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             }
         }
 
-        Fail.With($"Expected {Name} to contain an item matching {predicate.Body}, but it did not. It has:{Lines(items)}");
+        Fail.With($"Expected {Name} to contain an item matching {predicate.Body}, {NotFound(items)}");
         return default;
     }
 
     public AndConstraint<TSelf> NotContain(T unexpected)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"not to contain {Formatter.Format(unexpected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         var index = IndexOf(items, unexpected);
         if (index >= 0)
         {
@@ -225,12 +228,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         var other = Materialise(unexpected);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"not to contain any of {Formatter.Format(other)}");
         }
 
-        var items = Subject;
+        var items = Items;
         List<T>? found = null;
         for (var i = 0; i < other.Count; i++)
         {
@@ -251,16 +254,16 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> NotContain(Expression<Func<T, bool>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"not to contain any item matching {predicate.Body}");
         }
 
-        var items = Subject;
+        var items = Items;
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is not null)
         {
-            Fail.With($"Expected {Name} not to contain any item matching {predicate.Body}, but found:{Lines(items, matching)}");
+            Fail.With($"Expected {Name} not to contain any item matching {predicate.Body}, but found{Listing(items, matching)}");
         }
 
         return And();
@@ -271,7 +274,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         var items = Required("to contain a single item");
         if (items.Count != 1)
         {
-            Fail.With($"Expected {Name} to contain a single item, but found {items.Count}:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain a single item, but found {items.Count}{Listing(items)}");
         }
 
         return new((TSelf)this, items[0]);
@@ -280,21 +283,21 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndWhichConstraint<TSelf, T> ContainSingle(Expression<Func<T, bool>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to contain a single item matching {predicate.Body}");
         }
 
-        var items = Subject;
+        var items = Items;
         var matching = Where(items, predicate.Compile(), expected: true);
         if (matching is null)
         {
-            Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found 0. It has:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found 0.{HasTail(items)}");
         }
 
         if (matching.Count != 1)
         {
-            Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found {matching.Count}:{Lines(items, matching)}");
+            Fail.With($"Expected {Name} to contain a single item matching {predicate.Body}, but found {matching.Count}{Listing(items, matching)}");
         }
 
         return new((TSelf)this, items[matching[0]]);
@@ -303,16 +306,16 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     public AndConstraint<TSelf> OnlyContain(Expression<Func<T, bool>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to only contain items matching {predicate.Body}");
         }
 
-        var items = Subject;
+        var items = Items;
         var failing = Where(items, predicate.Compile(), expected: false);
         if (failing is not null)
         {
-            Fail.With($"Expected {Name} to only contain items matching {predicate.Body}, but these did not:{Lines(items, failing)}");
+            Fail.With($"Expected {Name} to only contain items matching {predicate.Body}, but these did not{Listing(items, failing)}");
         }
 
         return And();
@@ -371,12 +374,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(unexpected);
         var other = Materialise(unexpected);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"not to equal {Formatter.Format(other)}");
         }
 
-        var items = Subject;
+        var items = Items;
         if (items.Count != other.Count)
         {
             return And();
@@ -443,12 +446,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     private AndConstraint<TSelf> InOrder<TKey>(IComparer<TKey> comparer, Func<T, TKey> key, string direction, bool descending)
     {
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to be in {direction} order");
         }
 
-        var items = Subject;
+        var items = Items;
         if (items.Count < 2)
         {
             return And();
@@ -458,7 +461,17 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         for (var i = 1; i < items.Count; i++)
         {
             var current = key(items[i]);
-            var order = comparer.Compare(previous, current);
+            int order;
+            try
+            {
+                order = comparer.Compare(previous, current);
+            }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            {
+                Fail.With($"Expected {Name} to be in {direction} order, but {Formatter.Format(typeof(TKey))} is not comparable.");
+                return default!;
+            }
+
             if (descending ? order < 0 : order > 0)
             {
                 Fail.With($"Expected {Name} to be in {direction} order, but [{i}] {Formatter.Format(items[i])} comes after [{i - 1}] {Formatter.Format(items[i - 1])}.");
@@ -508,12 +521,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(other);
         var expected = Materialise(other);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"not to intersect with {Formatter.Format(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? common = null;
@@ -537,12 +550,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     {
         ArgumentNullException.ThrowIfNull(superset);
         var expected = Materialise(superset);
-        if (Subject is null)
+        if (IsNull)
         {
             FailNull($"to be a subset of {Formatter.Format(expected)}");
         }
 
-        var items = Subject;
+        var items = Items;
         var set = new HashSet<T>(expected);
         var seen = new HashSet<T>();
         List<T>? extra = null;
@@ -595,7 +608,16 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     protected static string Plural(int count) => count == 1 ? "1 item" : $"{count} items";
 
-    protected static string Lines(IReadOnlyList<T> items, List<int>? indexes = null)
+    protected static string Listing(IReadOnlyList<T> items, List<int>? indexes = null) =>
+        (indexes?.Count ?? items.Count) == 0 ? "." : ":" + Lines(items, indexes);
+
+    protected static string NotFound(IReadOnlyList<T> items) =>
+        items.Count == 0 ? "but it was empty." : "but it did not. It has:" + Lines(items);
+
+    protected static string HasTail(IReadOnlyList<T> items) =>
+        items.Count == 0 ? "" : " It has:" + Lines(items);
+
+    private static string Lines(IReadOnlyList<T> items, List<int>? indexes = null)
     {
         var total = indexes?.Count ?? items.Count;
         var shown = Math.Min(total, Formatter.MaxItems);

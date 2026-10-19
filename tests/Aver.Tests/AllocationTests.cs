@@ -37,4 +37,22 @@ public class AllocationTests
     [Fact] public void String_Contain() { var s = "abc"; AssertNoAllocation(() => s.Should().Contain("b")); }
 
     [Fact] public void String_NotBeNullOrEmpty() { var s = "abc"; AssertNoAllocation(() => s.Should().NotBeNullOrEmpty()); }
+
+    private static long BytesForContainKey(int size)
+    {
+        var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);
+        d.Should().ContainKey(size - 1);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < Calls; i++) d.Should().ContainKey(size - 1);
+        return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+
+    [Fact]
+    public void Dictionary_ContainKey_allocation_does_not_grow_with_size()
+    {
+        var small = BytesForContainKey(10);
+        var large = BytesForContainKey(10_000);
+        Assert.Equal(small, large);
+        Assert.True(large / Calls <= 128);
+    }
 }

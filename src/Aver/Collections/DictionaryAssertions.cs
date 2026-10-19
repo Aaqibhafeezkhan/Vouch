@@ -4,27 +4,22 @@ public sealed class DictionaryAssertions<TKey, TValue>
     : CollectionAssertionsBase<KeyValuePair<TKey, TValue>, DictionaryAssertions<TKey, TValue>>
     where TKey : notnull
 {
-    private readonly IDictionary<TKey, TValue>? _mutable;
-    private readonly IReadOnlyDictionary<TKey, TValue>? _readOnly;
-
-    internal DictionaryAssertions(IDictionary<TKey, TValue>? subject, string? expression)
-        : base(subject, expression) => _mutable = subject;
-
-    internal DictionaryAssertions(IReadOnlyDictionary<TKey, TValue>? subject, string? expression)
-        : base(subject, expression) => _readOnly = subject;
+    internal DictionaryAssertions(IEnumerable<KeyValuePair<TKey, TValue>>? subject, string? expression)
+        : base(subject, expression)
+    {
+    }
 
     public AndWhichConstraint<DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected)
     {
         ArgumentNullException.ThrowIfNull(expected);
-        var items = Subject;
-        if (items is null)
+        if (IsNull)
         {
             Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, but found null.");
         }
 
         if (!TryGetValue(expected, out var value))
         {
-            Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, but it did not. It has:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain key {Formatter.Format(expected)}, {NotFound(Items)}");
         }
 
         return new(this, value);
@@ -33,7 +28,7 @@ public sealed class DictionaryAssertions<TKey, TValue>
     public AndConstraint<DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected)
     {
         ArgumentNullException.ThrowIfNull(unexpected);
-        if (Subject is null)
+        if (IsNull)
         {
             Fail.With($"Expected {Name} not to contain key {Formatter.Format(unexpected)}, but found null.");
         }
@@ -54,8 +49,7 @@ public sealed class DictionaryAssertions<TKey, TValue>
             ArgumentNullException.ThrowIfNull(key, nameof(expected));
         }
 
-        var items = Subject;
-        if (items is null)
+        if (IsNull)
         {
             Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but found null.");
         }
@@ -71,7 +65,7 @@ public sealed class DictionaryAssertions<TKey, TValue>
 
         if (missing is not null)
         {
-            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}. It has:{Lines(items)}");
+            Fail.With($"Expected {Name} to contain keys {Formatter.Format(expected)}, but it is missing {Formatter.Format(missing)}.{HasTail(Items)}");
         }
 
         return And();
@@ -79,11 +73,25 @@ public sealed class DictionaryAssertions<TKey, TValue>
 
     private bool TryGetValue(TKey key, [System.Diagnostics.CodeAnalysis.MaybeNullWhen(false)] out TValue value)
     {
-        if (_mutable is not null)
+        switch (Source)
         {
-            return _mutable.TryGetValue(key, out value);
+            case IDictionary<TKey, TValue> mutable:
+                return mutable.TryGetValue(key, out value);
+            case IReadOnlyDictionary<TKey, TValue> readOnly:
+                return readOnly.TryGetValue(key, out value);
         }
 
-        return _readOnly!.TryGetValue(key, out value);
+        var comparer = EqualityComparer<TKey>.Default;
+        foreach (var pair in Items)
+        {
+            if (comparer.Equals(pair.Key, key))
+            {
+                value = pair.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 }

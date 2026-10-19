@@ -1,3 +1,6 @@
+using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
+using System.Collections.Immutable;
 using Xunit;
 
 namespace Aver.Tests;
@@ -38,4 +41,15 @@ public class DictionaryAssertionsTests
     [Fact] public void Dictionary_Contain_predicate_Which_is_the_pair() => Assert.Equal("b", Sample().Should().Contain(kv => kv.Value == 2).Which.Key);
     [Fact] public void Dictionary_null_BeNull_passes() { IDictionary<string, int>? d = null; d.Should().BeNull(); }
     [Fact] public void Dictionary_null_HaveCount_fails() { IReadOnlyDictionary<string, int>? d = null; Assert.Equal("Expected d to contain 1 item, but found null.", Message(() => d.Should().HaveCount(1))); }
+
+    [Fact] public void ConcurrentDictionary_compiles_and_works() => new ConcurrentDictionary<string, int>(Sample()).Should().ContainKey("a");
+    [Fact] public void ImmutableDictionary_compiles_and_works() => Sample().ToImmutableDictionary().Should().ContainKey("a");
+    [Fact] public void SortedDictionary_compiles_and_works() => new SortedDictionary<string, int>(Sample()).Should().ContainKey("a");
+    [Fact] public void ReadOnlyDictionary_compiles_and_works() => new ReadOnlyDictionary<string, int>(Sample()).Should().ContainKey("a");
+    [Fact] public void SortedList_compiles_and_works() => new SortedList<string, int>(Sample()).Should().ContainKey("a");
+    [Fact] public void Plain_pair_sequence_works_by_scan() { IEnumerable<KeyValuePair<string, int>> pairs = Sample().ToList(); Assert.Equal(2, pairs.Should().ContainKey("b").Which); Assert.Throws<AverException>(() => pairs.Should().ContainKey("z")); }
+    [Fact] public void List_of_ints_still_resolves_to_collection_assertions() => Assert.IsType<GenericCollectionAssertions<int>>(new List<int>().Should());
+    [Fact] public void ContainKey_message_on_empty() { var d = new Dictionary<string, int>(); Assert.Equal("Expected d to contain key \"a\", but it was empty.", Message(() => d.Should().ContainKey("a"))); }
+    [Fact] public void ContainKeys_message_on_empty() { var d = new Dictionary<string, int>(); Assert.Equal("Expected d to contain keys [\"a\"], but it is missing [\"a\"].", Message(() => d.Should().ContainKeys("a"))); }
+    [Fact] public void ContainKey_sees_the_live_dictionary() { var d = Sample(); var a = d.Should(); d["z"] = 9; a.ContainKey("z"); }
 }
