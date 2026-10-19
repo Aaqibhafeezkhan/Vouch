@@ -158,9 +158,9 @@ public static class NullableNumericApproximationExtensions
             return new(assertions);
         }
 
-        if (!(T.Abs(actual - expected) <= precision))
+        if (!NumericDifference.IsWithin(actual, expected, precision, out var detail))
         {
-            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(actual)} (off by {Formatter.Format(T.Abs(actual - expected))}).");
+            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(actual)} {detail}.");
         }
 
         return new(assertions);

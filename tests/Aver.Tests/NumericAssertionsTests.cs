@@ -110,4 +110,21 @@ public class NumericAssertionsTests
         double? far = 1.75;
         Assert.Equal("Expected far to approximate 1.5 +/- 0.125, but found 1.75 (off by 0.25).", Message(() => far.Should().BeApproximately(1.5, 0.125)));
     }
+
+    [Fact]
+    public void Decimal_BeApproximately_overflow_fails_with_AverException()
+    {
+        var m = decimal.MaxValue;
+        Assert.Equal("Expected m to approximate -1m +/- 1m, but found 79228162514264337593543950335m (difference is out of range).", Message(() => m.Should().BeApproximately(-1m, 1m)));
+    }
+    [Fact]
+    public void Nullable_decimal_BeApproximately_overflow_fails_with_AverException()
+    {
+        decimal? m = decimal.MaxValue;
+        Assert.Throws<AverException>(() => m.Should().BeApproximately(-1m, 1m));
+    }
+    [Fact] public void Equal_infinities_approximate() { double.PositiveInfinity.Should().BeApproximately(double.PositiveInfinity, 0); double? d = double.PositiveInfinity; d.Should().BeApproximately(double.PositiveInfinity, 0); }
+    [Fact] public void Opposite_infinities_do_not_approximate() { double d = double.PositiveInfinity; Assert.Throws<AverException>(() => d.Should().BeApproximately(double.NegativeInfinity, 1)); }
+    [Fact] public void Float_BeApproximately_fails() { Assert.Throws<AverException>(() => 1.75f.Should().BeApproximately(1.5f, 0.125f)); }
+    [Fact] public void Float_BeApproximately_message() { var f = 1.75f; Assert.Equal("Expected f to approximate 1.5f +/- 0.125f, but found 1.75f (off by 0.25f).", Message(() => f.Should().BeApproximately(1.5f, 0.125f))); }
 }

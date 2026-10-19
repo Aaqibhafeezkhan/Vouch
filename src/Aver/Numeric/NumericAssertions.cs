@@ -128,11 +128,43 @@ public static class NumericApproximationExtensions
     private static AndConstraint<NumericAssertions<T>> Approximate<T>(NumericAssertions<T> assertions, T expected, T precision)
         where T : struct, INumber<T>
     {
-        if (!(T.Abs(assertions.Subject - expected) <= precision))
+        if (!NumericDifference.IsWithin(assertions.Subject, expected, precision, out var detail))
         {
-            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(assertions.Subject)} (off by {Formatter.Format(T.Abs(assertions.Subject - expected))}).");
+            Fail.With($"Expected {assertions.Name} to approximate {Formatter.Format(expected)} +/- {Formatter.Format(precision)}, but found {Formatter.Format(assertions.Subject)} {detail}.");
         }
 
         return new(assertions);
+    }
+}
+
+internal static class NumericDifference
+{
+    public static bool IsWithin<T>(T actual, T expected, T precision, out string detail)
+        where T : struct, INumber<T>
+    {
+        detail = string.Empty;
+        if (actual == expected)
+        {
+            return true;
+        }
+
+        T difference;
+        try
+        {
+            difference = T.Abs(actual - expected);
+        }
+        catch (OverflowException)
+        {
+            detail = "(difference is out of range)";
+            return false;
+        }
+
+        if (difference <= precision)
+        {
+            return true;
+        }
+
+        detail = $"(off by {Formatter.Format(difference)})";
+        return false;
     }
 }

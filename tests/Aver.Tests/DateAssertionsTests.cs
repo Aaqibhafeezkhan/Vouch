@@ -72,6 +72,10 @@ public class DateAssertionsTests
         Assert.Throws<AverException>(() => Offset.Should().BeOnOrAfter(Offset.AddSeconds(1)));
         Assert.Throws<AverException>(() => Offset.Should().BeOnOrBefore(Offset.AddSeconds(-1)));
     }
+    [Fact] public void DateTimeOffset_NotBe_message() { var at = Offset; Assert.Equal("Expected at not to be 2026-10-19T08:30:00.0000000+00:00, but it was.", Message(() => at.Should().NotBe(Offset))); }
+    [Fact] public void DateTimeOffset_BeBefore_message() { var at = Offset; Assert.Equal("Expected at to be before 2026-10-18T08:30:00.0000000+00:00, but found 2026-10-19T08:30:00.0000000+00:00.", Message(() => at.Should().BeBefore(Offset.AddDays(-1)))); }
+    [Fact] public void DateTimeOffset_BeOnOrAfter_message() { var at = Offset.AddDays(-1); Assert.Equal("Expected at to be on or after 2026-10-19T08:30:00.0000000+00:00, but found 2026-10-18T08:30:00.0000000+00:00.", Message(() => at.Should().BeOnOrAfter(Offset))); }
+    [Fact] public void DateTimeOffset_BeOnOrBefore_message() { var at = Offset; Assert.Equal("Expected at to be on or before 2026-10-18T08:30:00.0000000+00:00, but found 2026-10-19T08:30:00.0000000+00:00.", Message(() => at.Should().BeOnOrBefore(Offset.AddDays(-1)))); }
     [Fact] public void DateTimeOffset_BeAfter_message() { var at = Offset.AddDays(-1); Assert.Equal("Expected at to be after 2026-10-19T08:30:00.0000000+00:00, but found 2026-10-18T08:30:00.0000000+00:00.", Message(() => at.Should().BeAfter(Offset))); }
     [Fact] public void DateTimeOffset_BeCloseTo() { Offset.AddSeconds(5).Should().BeCloseTo(Offset, TimeSpan.FromSeconds(5)); var at = Offset.AddMinutes(1); Assert.Equal("Expected at to be within 00:00:05 of 2026-10-19T08:30:00.0000000+00:00, but found 2026-10-19T08:31:00.0000000+00:00 (off by 00:01:00).", Message(() => at.Should().BeCloseTo(Offset, TimeSpan.FromSeconds(5)))); }
     [Fact]
