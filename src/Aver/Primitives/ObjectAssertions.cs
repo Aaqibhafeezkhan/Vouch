@@ -16,7 +16,7 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> Be(object? expected)
     {
-        if (!object.Equals(Subject, expected))
+        if (!Numbers.ValueEquals(Subject, expected))
         {
             Fail.With($"Expected {Fail.Name(_expression)} to be {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -26,7 +26,7 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> NotBe(object? unexpected)
     {
-        if (object.Equals(Subject, unexpected))
+        if (Numbers.ValueEquals(Subject, unexpected))
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be {Formatter.Format(unexpected)}, but it was.");
         }
@@ -134,7 +134,7 @@ public readonly struct ObjectAssertions
     {
         foreach (var value in validValues)
         {
-            if (object.Equals(Subject, value))
+            if (Numbers.ValueEquals(Subject, value))
             {
                 return new(this);
             }

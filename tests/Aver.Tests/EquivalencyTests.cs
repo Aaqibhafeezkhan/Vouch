@@ -217,6 +217,23 @@ public class EquivalencyTests
 
     [Fact] public void Collection_subject_against_dictionary_expectation_is_a_mismatch() => Assert.Throws<AverException>(() => new OtherWrapper { Inner = new[] { 1 } }.Should().BeEquivalentTo(new OtherWrapper { Inner = new Dictionary<int, int> { [1] = 1 } }));
 
+    private sealed class IntBox { public int Value { get; init; } }
+    private sealed class LongBox { public long Value { get; init; } }
+    private sealed class DoubleBox { public double Value { get; init; } }
+
+    [Fact] public void Numbers_of_different_types_compare_by_value() { object o = 1; o.Should().BeEquivalentTo(1L); Assert.Throws<AverException>(() => o.Should().BeEquivalentTo(2L)); }
+    [Fact] public void A_number_and_a_fractional_value_differ() { object o = 2; Assert.Throws<AverException>(() => o.Should().BeEquivalentTo(1.5)); }
+    [Fact] public void A_typed_int_subject_matches_a_long_expectation() { 1.Should().BeEquivalentTo(1L); Assert.Throws<AverException>(() => 1.Should().BeEquivalentTo(2L)); }
+    [Fact]
+    public void Number_members_of_different_types_compare_by_value()
+    {
+        new IntBox { Value = 1 }.Should().BeEquivalentTo(new LongBox { Value = 1 });
+        new IntBox { Value = 1 }.Should().BeEquivalentTo(new DoubleBox { Value = 1.0 });
+        Assert.Throws<AverException>(() => new IntBox { Value = 2 }.Should().BeEquivalentTo(new DoubleBox { Value = 1.5 }));
+    }
+    [Fact] public void Items_of_different_numeric_types_compare_by_value() { new[] { 1, 2 }.Should().BeEquivalentTo(new long[] { 2, 1 }); }
+    [Fact] public void An_enum_does_not_equal_an_int() { object o = Color.Green; Assert.Throws<AverException>(() => o.Should().BeEquivalentTo(1)); }
+
     [Fact] public void Enums_of_different_types_compare_by_value() { Color.Green.Should().BeEquivalentTo(Shade.Green); Assert.Throws<AverException>(() => Color.Green.Should().BeEquivalentTo(Shade.Red)); }
 
     // records, anonymous types and tuples compare by members

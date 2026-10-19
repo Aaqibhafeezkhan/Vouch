@@ -66,11 +66,58 @@ public class ExceptionAssertionsTests
     }
 
     [Fact]
-    public void Throw_does_not_unwrap_AggregateException()
+    public void Throw_unwraps_an_AggregateException_holding_the_expected_type()
     {
-        Action act = () => throw new AggregateException(new InvalidOperationException("x"));
+        var inner = new InvalidOperationException("x");
+        Action act = () => throw new AggregateException(inner);
+        Assert.Same(inner, act.Should().Throw<InvalidOperationException>().Which);
+    }
+
+    [Fact]
+    public void Throw_unwraps_nested_AggregateExceptions()
+    {
+        var inner = new InvalidOperationException("x");
+        Action act = () => throw new AggregateException(new AggregateException(inner));
+        Assert.Same(inner, act.Should().Throw<InvalidOperationException>().Which);
+    }
+
+    [Fact]
+    public void Throw_finds_the_expected_type_among_several_inner_exceptions()
+    {
+        var inner = new InvalidOperationException("y");
+        Action act = () => throw new AggregateException(new FormatException("x"), inner);
+        Assert.Same(inner, act.Should().Throw<InvalidOperationException>().Which);
+    }
+
+    [Fact]
+    public void Throw_of_AggregateException_returns_the_aggregate()
+    {
+        var aggregate = new AggregateException(new InvalidOperationException("x"));
+        Action act = () => throw aggregate;
+        Assert.Same(aggregate, act.Should().Throw<AggregateException>().Which);
+    }
+
+    [Fact]
+    public void Throw_fails_when_no_inner_exception_has_the_expected_type()
+    {
+        Action act = () => throw new AggregateException(new FormatException("x"));
         Assert.StartsWith("Expected act to throw InvalidOperationException, but it threw AggregateException:",
             Msg(() => act.Should().Throw<InvalidOperationException>()));
+    }
+
+    [Fact]
+    public void Throw_fails_on_an_empty_AggregateException()
+    {
+        Action act = () => throw new AggregateException();
+        Assert.StartsWith("Expected act to throw InvalidOperationException, but it threw AggregateException:",
+            Msg(() => act.Should().Throw<InvalidOperationException>()));
+    }
+
+    [Fact]
+    public void WithMessage_after_an_unwrapped_Throw_reads_the_inner_message()
+    {
+        Action act = () => throw new AggregateException("outer", new InvalidOperationException("inner"));
+        act.Should().Throw<InvalidOperationException>().WithMessage("inner");
     }
 
     [Fact]
@@ -152,11 +199,55 @@ public class ExceptionAssertionsTests
     }
 
     [Fact]
-    public void WithMessage_passes_with_wildcards_and_is_case_sensitive()
+    public void WithMessage_passes_with_wildcards()
     {
         Action act = () => throw new InvalidOperationException("Name is required.");
         act.Should().Throw<InvalidOperationException>().WithMessage("Name * required.");
-        Assert.NotNull(Msg(() => act.Should().Throw<InvalidOperationException>().WithMessage("name*")));
+    }
+
+    [Theory]
+    [InlineData("Name is required.", "name*")]
+    [InlineData("NAME IS REQUIRED.", "name is required.")]
+    [InlineData("a\r\nb", "a\nb")]
+    [InlineData("a\nb", "a\r\nb")]
+    [InlineData("abc\n", "abc")]
+    [InlineData("abc", "abc\n")]
+    [InlineData("a\n\nb", "a\nb")]
+    [InlineData("a\nb", "a*b")]
+    public void WithMessage_ignores_case_and_newline_differences(string message, string pattern)
+    {
+        Action act = () => throw new InvalidOperationException(message);
+        act.Should().Throw<InvalidOperationException>().WithMessage(pattern);
+    }
+
+    [Theory]
+    [InlineData("a\nb", "a?b")]
+    [InlineData("abc ", "abc")]
+    [InlineData(" abc", "abc")]
+    [InlineData("a b", "a  b")]
+    public void WithMessage_still_fails_on_other_differences(string message, string pattern)
+    {
+        Action act = () => throw new InvalidOperationException(message);
+        Assert.NotNull(Msg(() => act.Should().Throw<InvalidOperationException>().WithMessage(pattern)));
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")]
+    public void WithMessage_empty_pattern_throws_ArgumentException(string message)
+    {
+        Action act = () => throw new InvalidOperationException(message);
+        var assertions = act.Should().Throw<InvalidOperationException>();
+        var ex = Assert.Throws<ArgumentException>(() => assertions.WithMessage(""));
+        Assert.Equal("pattern", ex.ParamName);
+        Assert.StartsWith("Cannot match string against an empty string. Provide a wildcard pattern or use the BeEmpty method.", ex.Message);
+    }
+
+    [Fact]
+    public async Task WithMessage_on_the_task_ignores_case()
+    {
+        Func<Task> act = () => throw new InvalidOperationException("Name is required.");
+        await act.Should().ThrowAsync<InvalidOperationException>().WithMessage("NAME*");
     }
 
     [Fact]
@@ -303,9 +394,17 @@ public class ExceptionAssertionsTests
     }
 
     [Fact]
-    public async Task ThrowAsync_does_not_unwrap_AggregateException()
+    public async Task ThrowAsync_unwraps_an_AggregateException_holding_the_expected_type()
     {
-        Func<Task> act = () => throw new AggregateException(new InvalidOperationException("x"));
+        var inner = new InvalidOperationException("x");
+        Func<Task> act = () => throw new AggregateException(inner);
+        Assert.Same(inner, (await act.Should().ThrowAsync<InvalidOperationException>()).Which);
+    }
+
+    [Fact]
+    public async Task ThrowAsync_fails_when_no_inner_exception_has_the_expected_type()
+    {
+        Func<Task> act = () => throw new AggregateException(new FormatException("x"));
         Assert.StartsWith("Expected act to throw InvalidOperationException, but it threw AggregateException:",
             await MsgAsync(() => act.Should().ThrowAsync<InvalidOperationException>()));
     }

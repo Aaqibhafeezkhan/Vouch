@@ -67,4 +67,17 @@ public class ObjectAssertionsTests
     [Fact] public void BeOfType_by_Type_message() { object o = new Order(1); Assert.Equal("Expected o to be of type String, but found Order.", Msg(() => o.Should().BeOfType(typeof(string)))); }
     [Fact] public void BeOfType_by_Type_fails_on_null() { object? o = null; Assert.Equal("Expected o to be of type String, but found null.", Msg(() => o.Should().BeOfType(typeof(string)))); }
     [Fact] public void BeOfType_by_Type_null_type_throws_ArgumentNullException() { object o = new Order(1); Assert.Throws<ArgumentNullException>(() => o.Should().BeOfType((Type)null!)); }
+
+    [Fact] public void Be_treats_numbers_of_different_types_with_the_same_value_as_equal() { object o = 1; o.Should().Be(1L); }
+    [Fact] public void Be_compares_integers_and_floating_point_by_value() { object o = 1; o.Should().Be(1.0); }
+    [Fact] public void Be_compares_decimal_and_double_by_value() { object o = 0.1m; o.Should().Be(0.1); }
+    [Fact] public void Be_fails_on_numbers_with_different_values() { object o = 1; Assert.Throws<AverException>(() => o.Should().Be(2L)); }
+    [Fact] public void Be_fails_on_a_fractional_value() { object o = 2; Assert.Throws<AverException>(() => o.Should().Be(1.5)); }
+    [Fact] public void Be_does_not_widen_a_float_to_a_double() { object o = 0.1f; Assert.Throws<AverException>(() => o.Should().Be(0.1)); }
+    [Fact] public void Be_does_not_compare_a_signed_negative_to_an_unsigned() { object o = -1; Assert.Throws<AverException>(() => o.Should().Be(ulong.MaxValue)); }
+    [Fact] public void Be_does_not_compare_a_number_to_a_char_or_a_bool() { object o = 97; Assert.Throws<AverException>(() => o.Should().Be('a')); Assert.Throws<AverException>(() => o.Should().Be(true)); }
+    [Fact] public void Be_does_not_compare_a_number_to_an_enum() { object o = 1; Assert.Throws<AverException>(() => o.Should().Be(DayOfWeek.Monday)); }
+    [Fact] public void Be_message_for_a_number_of_another_type() { object o = 1; Assert.Equal("Expected o to be 2L, but found 1.", Msg(() => o.Should().Be(2L))); }
+    [Fact] public void NotBe_fails_on_the_same_value_in_another_numeric_type() { object o = 1; Assert.Throws<AverException>(() => o.Should().NotBe(1L)); }
+    [Fact] public void BeOneOf_matches_numbers_across_types() { object o = 1; o.Should().BeOneOf(5L, 1L); }
 }

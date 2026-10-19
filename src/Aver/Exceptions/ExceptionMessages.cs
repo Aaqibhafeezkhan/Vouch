@@ -33,6 +33,17 @@ internal static class ExceptionMessages
 
     public static ExceptionAssertions<T> Check<T>(string name, Exception? thrown) where T : Exception
     {
+        if (thrown is AggregateException aggregate)
+        {
+            foreach (var inner in aggregate.Flatten().InnerExceptions)
+            {
+                if (inner is T unwrapped)
+                {
+                    return new ExceptionAssertions<T>(unwrapped, name);
+                }
+            }
+        }
+
         if (thrown is T match)
         {
             return new ExceptionAssertions<T>(match, name);

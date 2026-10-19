@@ -503,7 +503,7 @@ internal sealed class Comparison
 
     internal static bool ScalarEquals(object subject, object expectation)
     {
-        if (subject.Equals(expectation))
+        if (subject.Equals(expectation) || Numbers.Equal(subject, expectation))
         {
             return true;
         }

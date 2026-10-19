@@ -84,6 +84,36 @@ public class StringAssertionsTests
     [Fact] public void Match_passes() { var s = "INV-001"; s.Should().Match("INV-*"); }
     [Fact] public void Match_fails() { var s = "PO-1"; Assert.Throws<AverException>(() => s.Should().Match("INV-*")); }
     [Fact] public void Match_message() { var s = "PO-1"; Assert.Equal("Expected s to match \"INV-*\", but found \"PO-1\".", Message(() => s.Should().Match("INV-*"))); }
+    [Theory]
+    [InlineData("abc\n", "abc")]
+    [InlineData("abc\n", "abc?")]
+    [InlineData("a\nb", "a?b")]
+    [InlineData("a\nb", "a*b")]
+    public void Match_passes_across_newlines_like_a_regex_dollar(string text, string pattern) => text.Should().Match(pattern);
+
+    [Theory]
+    [InlineData("abc", "abc\n")]
+    [InlineData("abc\n\n", "abc")]
+    [InlineData("abc\r\n", "abc")]
+    [InlineData("a\r\nb", "a\nb")]
+    [InlineData("ABC", "abc")]
+    public void Match_still_fails_on_other_differences(string text, string pattern) =>
+        Assert.Throws<AverException>(() => text.Should().Match(pattern));
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("abc")]
+    public void Match_empty_pattern_throws_ArgumentException(string text)
+    {
+        var ex = Assert.Throws<ArgumentException>(() => text.Should().Match(""));
+        Assert.Equal("wildcardPattern", ex.ParamName);
+        Assert.StartsWith("Cannot match string against an empty string. Provide a wildcard pattern or use the BeEmpty method.", ex.Message);
+    }
+
+    [Fact] public void BeEquivalentTo_null_passes_on_a_null_subject() { string? s = null; s.Should().BeEquivalentTo(null); }
+    [Fact] public void BeEquivalentTo_null_fails_on_a_text_subject() { var s = "a"; Assert.Equal("Expected s to be equivalent to null, but found \"a\".", Message(() => s.Should().BeEquivalentTo(null))); }
+    [Fact] public void BeEquivalentTo_null_with_a_reason_fails() { var s = "a"; Assert.Equal("Expected s to be equivalent to null, but found \"a\". Because it is gone.", Message(() => s.Should().BeEquivalentTo(null, "it is gone"))); }
+
     [Fact] public void Match_fails_on_null() { string? s = null; Assert.Equal("Expected s to match \"A*\", but found null.", Message(() => s.Should().Match("A*"))); }
 
     [Fact] public void MatchRegex_passes() { var s = "INV-001"; s.Should().MatchRegex(@"^INV-\d+$"); }
@@ -120,7 +150,7 @@ public class StringAssertionsTests
     {
         { "expected", "StartWith" }, { "expected", "EndWith" }, { "unexpected", "NotStartWith" },
         { "expected", "Contain" }, { "unexpected", "NotContain" }, { "wildcardPattern", "Match" },
-        { "pattern", "MatchRegex" }, { "validValues", "BeOneOf" }, { "expected", "BeEquivalentTo" },
+        { "pattern", "MatchRegex" }, { "validValues", "BeOneOf" },
     };
 
     private static void Call(string? subject, string method)
@@ -135,7 +165,6 @@ public class StringAssertionsTests
             case "Match": subject.Should().Match(null!); break;
             case "MatchRegex": subject.Should().MatchRegex(null!); break;
             case "BeOneOf": subject.Should().BeOneOf(null!); break;
-            case "BeEquivalentTo": subject.Should().BeEquivalentTo(null!); break;
         }
     }
 

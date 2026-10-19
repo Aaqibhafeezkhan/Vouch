@@ -38,9 +38,10 @@ Other methods that take `params` (Dates, BeApproximately, BeOneOf with params) h
 
 None.
 
-## For the differential check against FluentAssertions
+## Checked against AwesomeAssertions
 
-- Where the reason sits in the message. Aver appends it at the end. FluentAssertions places it mid-sentence.
-- `NotContainEquivalentOf` casing. Aver uses ordinal ignore-case.
-- `Match<T>` on a null subject. Aver fails with "but found null".
-- Case sensitivity of `WithMessage`.
+`tests/Aver.Differential.Tests` runs edge inputs through both libraries and compares pass and fail. Where they differ on purpose:
+
+- Where the reason sits in the message. Aver appends it at the end. AwesomeAssertions places it mid-sentence.
+- `Match<T>` on a null subject or a subject of another type. AwesomeAssertions throws `NullReferenceException` or `InvalidCastException`. Aver fails with a message.
+- A `Throw<T>` that finds several matching inner exceptions in an `AggregateException` returns the first. AwesomeAssertions throws when `Which` is read.

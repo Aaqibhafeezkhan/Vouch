@@ -130,7 +130,7 @@ internal sealed class AnyOrderMatcher
             return bits.GetHashCode();
         }
 
-        return value.GetHashCode();
+        return Numbers.IsNumber(value) ? Numbers.Hash(value) : value.GetHashCode();
     }
 
     private int Find(object? item, int index)

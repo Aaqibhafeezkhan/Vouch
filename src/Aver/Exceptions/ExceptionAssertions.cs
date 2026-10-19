@@ -20,8 +20,8 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
 
     public ExceptionAssertions<TException> WithMessage(string pattern)
     {
-        ArgumentNullException.ThrowIfNull(pattern);
-        if (!Wildcard.IsMatch(Which.Message, pattern))
+        Wildcard.RequirePattern(pattern, nameof(pattern));
+        if (!Wildcard.MatchesMessage(Which.Message, pattern))
         {
             Fail.With($"Expected {_name}'s exception message to match {Formatter.Format(pattern)}, but found {Formatter.Format(Which.Message)}.");
         }

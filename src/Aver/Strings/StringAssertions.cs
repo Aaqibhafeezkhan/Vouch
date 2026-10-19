@@ -181,9 +181,9 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> Match(string wildcardPattern)
     {
-        ArgumentNullException.ThrowIfNull(wildcardPattern);
+        Wildcard.RequirePattern(wildcardPattern, nameof(wildcardPattern));
 
-        if (Subject is null || !Wildcard.IsMatch(Subject, wildcardPattern))
+        if (Subject is null || !Wildcard.MatchesString(Subject, wildcardPattern))
         {
             Fail.With($"Expected {Name} to match {Formatter.Format(wildcardPattern)}, but found {Formatter.Format(Subject)}.");
         }
@@ -257,11 +257,9 @@ public readonly struct StringAssertions
         return new(this);
     }
 
-    public AndConstraint<StringAssertions> BeEquivalentTo(string expected)
+    public AndConstraint<StringAssertions> BeEquivalentTo(string? expected)
     {
-        ArgumentNullException.ThrowIfNull(expected);
-
-        if (Subject is null || !string.Equals(Subject, expected, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(Subject, expected, StringComparison.OrdinalIgnoreCase))
         {
             Fail.With($"Expected {Name} to be equivalent to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -473,7 +471,7 @@ public readonly struct StringAssertions
         }
     }
 
-    public AndConstraint<StringAssertions> BeEquivalentTo(string expected, string because)
+    public AndConstraint<StringAssertions> BeEquivalentTo(string? expected, string because)
     {
         try
         {

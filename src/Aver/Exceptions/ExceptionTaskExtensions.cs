@@ -6,7 +6,7 @@ public static class ExceptionTaskExtensions
         where T : Exception
     {
         ArgumentNullException.ThrowIfNull(task);
-        ArgumentNullException.ThrowIfNull(pattern);
+        Wildcard.RequirePattern(pattern, nameof(pattern));
         return WithMessageCore(task, pattern);
     }
 
