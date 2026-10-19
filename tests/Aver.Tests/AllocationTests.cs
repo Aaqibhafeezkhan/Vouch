@@ -55,4 +55,42 @@ public class AllocationTests
         Assert.Equal(small, large);
         Assert.True(large / Calls <= 128);
     }
+
+    private static long Bytes(Action call)
+    {
+        call();
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < Calls; i++) call();
+        return GC.GetAllocatedBytesForCurrentThread() - before;
+    }
+
+    private static void AssertNoCopy<T>(IEnumerable<T> subject, Action<GenericCollectionAssertions<T>> assertion)
+    {
+        var baseline = Bytes(() => subject.Should());
+        Assert.Equal(baseline, Bytes(() => assertion(subject.Should())));
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(10_000)]
+    public void Count_methods_do_not_copy_a_set(int size)
+    {
+        var set = Enumerable.Range(0, size).ToHashSet();
+        AssertNoCopy(set, a => a.HaveCount(size));
+        AssertNoCopy(set, a => a.HaveCountGreaterThan(size - 1));
+        AssertNoCopy(set, a => a.HaveCountGreaterThanOrEqualTo(size));
+        AssertNoCopy(set, a => a.NotBeEmpty());
+        AssertNoCopy(new HashSet<int>(), a => a.BeEmpty());
+    }
+
+    [Theory]
+    [InlineData(10)]
+    [InlineData(10_000)]
+    public void Count_methods_do_not_copy_a_dictionary(int size)
+    {
+        var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);
+        var baseline = Bytes(() => d.Should());
+        Assert.Equal(baseline, Bytes(() => d.Should().HaveCount(size)));
+        Assert.Equal(baseline, Bytes(() => d.Should().NotBeEmpty()));
+    }
 }

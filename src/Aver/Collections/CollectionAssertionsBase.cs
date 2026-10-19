@@ -40,13 +40,26 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return Items;
     }
 
+    private int Count => Source switch
+    {
+        IReadOnlyCollection<T> c => c.Count,
+        ICollection<T> c => c.Count,
+        System.Collections.ICollection c => c.Count,
+        _ => Items.Count,
+    };
+
     protected AndConstraint<TSelf> And() => new((TSelf)this);
 
     public AndConstraint<TSelf> BeEmpty()
     {
-        var items = Required("to be empty");
-        if (items.Count != 0)
+        if (IsNull)
         {
+            FailNull("to be empty");
+        }
+
+        if (Count != 0)
+        {
+            var items = Items;
             Fail.With($"Expected {Name} to be empty, but found {Plural(items.Count)}{Listing(items)}");
         }
 
@@ -55,7 +68,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public AndConstraint<TSelf> NotBeEmpty()
     {
-        if (Required("not to be empty").Count == 0)
+        if (IsNull)
+        {
+            FailNull("not to be empty");
+        }
+
+        if (Count == 0)
         {
             Fail.With($"Expected {Name} not to be empty, but it was.");
         }
@@ -90,9 +108,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             FailNull($"to contain {Plural(expected)}");
         }
 
-        var items = Items;
-        if (items.Count != expected)
+        if (Count != expected)
         {
+            var items = Items;
             Fail.With($"Expected {Name} to contain {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -106,9 +124,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             FailNull($"to contain more than {Plural(expected)}");
         }
 
-        var items = Items;
-        if (items.Count <= expected)
+        if (Count <= expected)
         {
+            var items = Items;
             Fail.With($"Expected {Name} to contain more than {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
@@ -122,9 +140,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             FailNull($"to contain at least {Plural(expected)}");
         }
 
-        var items = Items;
-        if (items.Count < expected)
+        if (Count < expected)
         {
+            var items = Items;
             Fail.With($"Expected {Name} to contain at least {Plural(expected)}, but found {items.Count}{Listing(items)}");
         }
 
