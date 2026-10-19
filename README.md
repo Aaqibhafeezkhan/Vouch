@@ -124,7 +124,17 @@ Aver was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAsserti
 
 `benchmarks/Aver.Benchmarks` compares Aver with FluentAssertions 8.3.0 using BenchmarkDotNet. It covers passing `int Be`, `string Be`, `HaveCount` and `Contain` on a 100 item list, `ThrowAsync<T>().WithMessage`, and `BeEquivalentTo` on one record with 6 members, a list of 100 records in reverse order, and a list of 1,000 `Row(long Id, string Name)` records in reverse order.
 
-Targets: 0 bytes on passing value type, string and bool assertions, and `BeEquivalentTo` at least 5 times faster and 5 times lighter on memory than FluentAssertions. The full run is pending, so no numbers are published yet. See [benchmarks/RESULTS.md](benchmarks/RESULTS.md). A missed target will be listed there as a gap.
+Targets: 0 bytes on passing value type, string and bool assertions, and `BeEquivalentTo` at least 5 times faster and 5 times lighter on memory than FluentAssertions. Both are met on an Apple M1 with .NET 10:
+
+| | Aver | FluentAssertions |
+|---|---:|---:|
+| Passing `int Be` | 0.58 ns, 0 B | 131.6 ns, 1,072 B |
+| Passing `string Be` | 2.83 ns, 0 B | 503.4 ns, 3,120 B |
+| `BeEquivalentTo`, one record | 796 ns, 960 B | 29.2 us, 106,426 B |
+| `BeEquivalentTo`, 100 records reordered | 142.5 us, 89 KB | 1,085 ms, 1.76 GB |
+| `BeEquivalentTo`, 1,000 rows reordered | 49.0 ms, 24 MB | 5,667 ms, 10.5 GB |
+
+Full tables in [benchmarks/RESULTS.md](benchmarks/RESULTS.md).
 
 ## Licence
 
