@@ -8,6 +8,10 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         => new(subject, expression);
 
+    public static StringAssertions Should(this string? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
     public static ValueAssertions<T> Should<T>(this T subject,
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         where T : struct
