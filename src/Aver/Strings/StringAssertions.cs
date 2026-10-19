@@ -121,6 +121,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> StartWith(string expected)
     {
+        ArgumentNullException.ThrowIfNull(expected);
+
         if (Subject is null || !Subject.StartsWith(expected, StringComparison.Ordinal))
         {
             Fail.With($"Expected {Name} to start with {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
@@ -131,6 +133,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> NotStartWith(string unexpected)
     {
+        ArgumentNullException.ThrowIfNull(unexpected);
+
         if (Subject is null || Subject.StartsWith(unexpected, StringComparison.Ordinal))
         {
             Fail.With($"Expected {Name} not to start with {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
@@ -141,6 +145,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> EndWith(string expected)
     {
+        ArgumentNullException.ThrowIfNull(expected);
+
         if (Subject is null || !Subject.EndsWith(expected, StringComparison.Ordinal))
         {
             Fail.With($"Expected {Name} to end with {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
@@ -151,6 +157,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> Contain(string expected)
     {
+        ArgumentNullException.ThrowIfNull(expected);
+
         if (Subject is null || !Subject.Contains(expected, StringComparison.Ordinal))
         {
             Fail.With($"Expected {Name} to contain {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
@@ -161,6 +169,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> NotContain(string unexpected)
     {
+        ArgumentNullException.ThrowIfNull(unexpected);
+
         if (Subject is null || Subject.Contains(unexpected, StringComparison.Ordinal))
         {
             Fail.With($"Expected {Name} not to contain {Formatter.Format(unexpected)}, but found {Formatter.Format(Subject)}.");
@@ -171,6 +181,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> Match(string wildcardPattern)
     {
+        ArgumentNullException.ThrowIfNull(wildcardPattern);
+
         if (Subject is null || !Wildcard.IsMatch(Subject, wildcardPattern))
         {
             Fail.With($"Expected {Name} to match {Formatter.Format(wildcardPattern)}, but found {Formatter.Format(Subject)}.");
@@ -181,6 +193,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> MatchRegex(string pattern)
     {
+        ArgumentNullException.ThrowIfNull(pattern);
+
         var matched = false;
         var timedOut = false;
         if (Subject is not null)
@@ -192,6 +206,10 @@ public readonly struct StringAssertions
             catch (RegexMatchTimeoutException)
             {
                 timedOut = true;
+            }
+            catch (ArgumentException ex)
+            {
+                Fail.With($"Expected {Name} to match regex {Formatter.Format(pattern)}, but the pattern is not a valid regular expression: {ex.Message}.");
             }
         }
 
@@ -225,6 +243,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> BeOneOf(params string?[] validValues)
     {
+        ArgumentNullException.ThrowIfNull(validValues);
+
         foreach (var value in validValues)
         {
             if (string.Equals(Subject, value, StringComparison.Ordinal))
@@ -239,6 +259,8 @@ public readonly struct StringAssertions
 
     public AndConstraint<StringAssertions> BeEquivalentTo(string expected)
     {
+        ArgumentNullException.ThrowIfNull(expected);
+
         if (Subject is null || !string.Equals(Subject, expected, StringComparison.OrdinalIgnoreCase))
         {
             Fail.With($"Expected {Name} to be equivalent to {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");

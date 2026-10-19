@@ -115,4 +115,52 @@ public class StringAssertionsTests
 
     [Fact] public void And_chains() { var s = "abc"; s.Should().StartWith("a").And.EndWith("c"); }
     [Fact] public void Object_overload_still_works_for_strings_cast_to_object() { object s = "abc"; s.Should().BeOfType<string>(); }
+
+    public static TheoryData<string, string?> NullArgumentCases => new()
+    {
+        { "expected", "StartWith" }, { "expected", "EndWith" }, { "unexpected", "NotStartWith" },
+        { "expected", "Contain" }, { "unexpected", "NotContain" }, { "wildcardPattern", "Match" },
+        { "pattern", "MatchRegex" }, { "validValues", "BeOneOf" }, { "expected", "BeEquivalentTo" },
+    };
+
+    private static void Call(string? subject, string method)
+    {
+        switch (method)
+        {
+            case "StartWith": subject.Should().StartWith(null!); break;
+            case "EndWith": subject.Should().EndWith(null!); break;
+            case "NotStartWith": subject.Should().NotStartWith(null!); break;
+            case "Contain": subject.Should().Contain(null!); break;
+            case "NotContain": subject.Should().NotContain(null!); break;
+            case "Match": subject.Should().Match(null!); break;
+            case "MatchRegex": subject.Should().MatchRegex(null!); break;
+            case "BeOneOf": subject.Should().BeOneOf(null!); break;
+            case "BeEquivalentTo": subject.Should().BeEquivalentTo(null!); break;
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(NullArgumentCases))]
+    public void Null_argument_throws_for_a_non_null_subject(string parameter, string? method)
+    {
+        var ex = Assert.Throws<ArgumentNullException>(() => Call("abc", method!));
+        Assert.Equal(parameter, ex.ParamName);
+    }
+
+    [Theory]
+    [MemberData(nameof(NullArgumentCases))]
+    public void Null_argument_throws_for_a_null_subject(string parameter, string? method)
+    {
+        var ex = Assert.Throws<ArgumentNullException>(() => Call(null, method!));
+        Assert.Equal(parameter, ex.ParamName);
+    }
+
+    [Fact]
+    public void MatchRegex_invalid_pattern_fails_with_a_message()
+    {
+        var s = "abc";
+        var text = Message(() => s.Should().MatchRegex("("));
+        Assert.StartsWith("Expected s to match regex \"(\", but the pattern is not a valid regular expression: ", text);
+        Assert.EndsWith(".", text);
+    }
 }
