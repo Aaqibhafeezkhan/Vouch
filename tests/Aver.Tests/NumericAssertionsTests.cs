@@ -50,7 +50,15 @@ public class NumericAssertionsTests
     [Fact] public void Decimal_BeApproximately_message() { var m = 1.6m; Assert.Equal("Expected m to approximate 1.5m +/- 0.01m, but found 1.6m (off by 0.1m).", Message(() => m.Should().BeApproximately(1.5m, 0.01m))); }
     [Fact] public void Float_BeApproximately_passes() { 1.5f.Should().BeApproximately(1.5f, 0f); }
 
-    [Fact] public void NaN_never_passes_Be() { double d = double.NaN; Assert.Equal("Expected d to be NaN, but found NaN.", Message(() => d.Should().Be(double.NaN))); }
+    [Fact] public void NaN_equals_NaN_in_Be() { double d = double.NaN; d.Should().Be(double.NaN); float f = float.NaN; f.Should().Be(float.NaN); }
+    [Fact] public void NaN_fails_NotBe_NaN() { double d = double.NaN; Assert.Equal("Expected d not to be NaN, but it was.", Message(() => d.Should().NotBe(double.NaN))); float f = float.NaN; Assert.Equal("Expected f not to be NaNf, but it was.", Message(() => f.Should().NotBe(float.NaN))); }
+    [Fact] public void NaN_passes_NotBe_a_number() { double.NaN.Should().NotBe(1.0); float.NaN.Should().NotBe(1f); }
+    [Fact] public void NaN_passes_BeOneOf_NaN() { double.NaN.Should().BeOneOf(1.0, double.NaN); float.NaN.Should().BeOneOf(1f, float.NaN); }
+    [Fact] public void NaN_fails_BeOneOf_without_NaN() { double d = double.NaN; Assert.Throws<AverException>(() => d.Should().BeOneOf(1.0, 2.0)); }
+    [Fact] public void Nullable_NaN_equals_NaN_in_Be() { double? d = double.NaN; d.Should().Be(double.NaN); float? f = float.NaN; f.Should().Be(float.NaN); }
+    [Fact] public void Nullable_NaN_fails_NotBe_NaN() { double? d = double.NaN; Assert.Throws<AverException>(() => d.Should().NotBe(double.NaN)); float? f = float.NaN; Assert.Throws<AverException>(() => f.Should().NotBe(float.NaN)); }
+    [Fact] public void Nullable_NaN_passes_BeOneOf_NaN() { double? d = double.NaN; d.Should().BeOneOf(1.0, double.NaN); float? f = float.NaN; f.Should().BeOneOf(1f, float.NaN); }
+    [Fact] public void Null_still_fails_Be_NaN_and_passes_NotBe_NaN() { double? d = null; Assert.Throws<AverException>(() => d.Should().Be(double.NaN)); d.Should().NotBe(double.NaN); Assert.Throws<AverException>(() => d.Should().BeOneOf(double.NaN)); }
     [Fact] public void NaN_fails_comparisons() { double d = double.NaN; Assert.Throws<AverException>(() => d.Should().BeGreaterThan(0)); Assert.Throws<AverException>(() => d.Should().BeLessThan(0)); Assert.Throws<AverException>(() => d.Should().BeInRange(-1, 1)); }
 
     [Fact]

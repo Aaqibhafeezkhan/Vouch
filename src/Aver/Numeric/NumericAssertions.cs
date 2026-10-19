@@ -18,7 +18,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> Be(T expected)
     {
-        if (!(Subject == expected))
+        if (!Subject.Equals(expected))
         {
             Fail.With($"Expected {Name} to be {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
@@ -28,7 +28,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
 
     public AndConstraint<NumericAssertions<T>> NotBe(T unexpected)
     {
-        if (Subject == unexpected)
+        if (Subject.Equals(unexpected))
         {
             Fail.With($"Expected {Name} not to be {Formatter.Format(unexpected)}, but it was.");
         }
@@ -100,7 +100,7 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
     {
         foreach (var value in validValues)
         {
-            if (Subject == value)
+            if (Subject.Equals(value))
             {
                 return new(this);
             }
