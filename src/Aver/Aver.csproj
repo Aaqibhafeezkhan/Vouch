@@ -11,7 +11,19 @@
     <Version>0.1.0</Version>
     <PackageId>Aver</PackageId>
     <PackageLicenseExpression>MPL-2.0</PackageLicenseExpression>
+    <Description>Fluent assertions for .NET with no dependencies. The .Should() surface of FluentAssertions, with failure messages built only when an assertion fails.</Description>
+    <Authors>BaryoDev</Authors>
+    <PackageTags>assertions testing fluentassertions should</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/BaryoDev/Aver</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="/" />
+    <None Include="../../assets/icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Aver.Tests" />

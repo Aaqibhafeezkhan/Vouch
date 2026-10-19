@@ -1,0 +1,13 @@
+# Changelog
+
+## 0.1.0
+
+First release.
+
+- `.Should()` for objects, bools, numbers, nullable numbers, strings, dates (`DateTime`, `DateTimeOffset`, `DateOnly`), collections, dictionaries and delegates.
+- `BeEquivalentTo` compares member by member, any order unless `WithStrictOrdering`, and lists every difference with its member path.
+- `Throw<T>`, `ThrowAsync<T>`, `NotThrow`, `NotThrowAsync`, with `WithMessage`, `WithParameterName` and `Which`.
+- `.And`, `.Which` and `.Subject` chains.
+- An optional reason string on most assertions, appended to the failure message.
+- One `AverException` type. Aver references no test framework. Failures show as plain test failures in xUnit v2, xUnit v3, NUnit and MSTest.
+- No runtime dependencies. Targets `net8.0` and `net10.0`.

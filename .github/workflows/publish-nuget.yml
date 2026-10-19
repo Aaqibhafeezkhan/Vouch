@@ -1,0 +1,73 @@
+name: Publish to NuGet
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g., 0.1.0)"
+        required: true
+        type: string
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+
+      - name: Check version matches the csproj
+        run: |
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::not a version number: $VERSION"
+            exit 1
+          fi
+          csproj=$(grep -oP '(?<=<Version>)[^<]+' src/Aver/Aver.csproj)
+          if [ "$csproj" != "$VERSION" ]; then
+            echo "::error::input version $VERSION does not match csproj $csproj"
+            exit 1
+          fi
+          if ! grep -q "^## $VERSION\$" CHANGELOG.md; then
+            echo "::error::CHANGELOG.md has no section for $VERSION"
+            exit 1
+          fi
+
+      - name: Restore & build
+        run: |
+          dotnet restore
+          dotnet build src/Aver/Aver.csproj --configuration Release --no-restore /p:Version="$VERSION"
+
+      - name: Test
+        run: dotnet test --configuration Release
+
+      - name: Pack
+        run: dotnet pack src/Aver/Aver.csproj --configuration Release --no-build --output ./nupkgs /p:Version="$VERSION"
+
+      - name: Check for NuGet API key
+        run: |
+          if [ -z "${{ secrets.NUGET_API_KEY }}" ]; then
+            echo "::error::NUGET_API_KEY secret is not set (org or repo)."
+            exit 1
+          fi
+
+      - name: Publish
+        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
+
+      - name: Tag and release
+        run: |
+          awk -v v="$VERSION" '$0 == "## " v { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md > release-notes.md
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag -a "v$VERSION" -m "Release v$VERSION"
+          git push origin "v$VERSION"
+          gh release create "v$VERSION" --title "Aver v$VERSION" --notes-file release-notes.md
