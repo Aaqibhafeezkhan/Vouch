@@ -1,0 +1,240 @@
+using System.Runtime.InteropServices;
+
+namespace Aver;
+
+internal sealed class AnyOrderMatcher
+{
+    private const int IndexThreshold = 16;
+
+    private readonly Comparison _run;
+    private readonly object?[] _subject;
+    private readonly bool[] _used;
+    private HashIndex? _scalars;
+    private Dictionary<Type, HashIndex?>? _byType;
+    private int _firstUnused;
+
+    private AnyOrderMatcher(Comparison run, object?[] subject)
+    {
+        _run = run;
+        _subject = subject;
+        _used = new bool[subject.Length];
+    }
+
+    public static void Run(Comparison run, object?[] subject, object?[] expected)
+    {
+        var matcher = new AnyOrderMatcher(run, subject);
+        for (var i = 0; i < expected.Length && !run.Stop; i++)
+        {
+            var item = expected[i];
+            var match = i < subject.Length && !matcher._used[i] && run.Probe(subject[i], item, i)
+                ? i
+                : matcher.Find(item, i);
+            if (match < 0)
+            {
+                run.ReportNotFound(i, item);
+            }
+            else
+            {
+                matcher._used[match] = true;
+            }
+        }
+    }
+
+    private static bool TryHash(object? item, MemberGetter[] keys, out int hash)
+    {
+        hash = 0;
+        if (item is null)
+        {
+            return false;
+        }
+
+        var shape = MemberCache.ShapeOf(item.GetType());
+        if (shape.Kind == TypeKind.Scalar)
+        {
+            return false;
+        }
+
+        var code = new HashCode();
+        try
+        {
+            for (var i = 0; i < keys.Length; i++)
+            {
+                var member = shape.Find(keys[i].Name);
+                if (member is null)
+                {
+                    return false;
+                }
+
+                var value = member.Get(item);
+                if (value is null)
+                {
+                    code.Add(0);
+                }
+                else if (MemberCache.IsScalarType(value.GetType()))
+                {
+                    code.Add(ScalarHash(value));
+                }
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return false;
+        }
+
+        hash = code.ToHashCode();
+        return true;
+    }
+
+    private static int ScalarHash(object value)
+    {
+        if (value is Enum e)
+        {
+            var bits = ((IConvertible)e).GetTypeCode() == TypeCode.UInt64 ? unchecked((long)Convert.ToUInt64(e)) : Convert.ToInt64(e);
+            return bits.GetHashCode();
+        }
+
+        return value.GetHashCode();
+    }
+
+    private int Find(object? item, int index)
+    {
+        HashIndex? hashIndex = null;
+        var hash = 0;
+        if (item is not null && _subject.Length >= IndexThreshold)
+        {
+            var shape = MemberCache.ShapeOf(item.GetType());
+            if (shape.Kind == TypeKind.Scalar)
+            {
+                hash = ScalarHash(item);
+                hashIndex = _scalars ??= HashIndex.Build(_subject, null);
+            }
+            else if (shape.Kind == TypeKind.Members && shape.Members.Length > 0 && TryHash(item, shape.Members, out hash))
+            {
+                _byType ??= new Dictionary<Type, HashIndex?>();
+                var type = item.GetType();
+                if (!_byType.TryGetValue(type, out hashIndex))
+                {
+                    hashIndex = HashIndex.Build(_subject, shape.Members);
+                    _byType[type] = hashIndex;
+                }
+            }
+        }
+
+        if (hashIndex is null)
+        {
+            return Scan(item, index);
+        }
+
+        if (hashIndex.Buckets.TryGetValue(hash, out var bucket))
+        {
+            var match = Walk(ref hashIndex.Heads[bucket], hashIndex.Next, item, index);
+            if (match >= 0)
+            {
+                return match;
+            }
+        }
+
+        return Walk(ref hashIndex.WildcardHead, hashIndex.Next, item, index);
+    }
+
+    private int Walk(ref int head, int[] next, object? item, int index)
+    {
+        var previous = -1;
+        var node = head;
+        while (node >= 0)
+        {
+            var following = next[node];
+            if (_used[node])
+            {
+                if (previous < 0)
+                {
+                    head = following;
+                }
+                else
+                {
+                    next[previous] = following;
+                }
+            }
+            else
+            {
+                if (_run.Probe(_subject[node], item, index))
+                {
+                    return node;
+                }
+
+                previous = node;
+            }
+
+            node = following;
+        }
+
+        return -1;
+    }
+
+    private int Scan(object? item, int index)
+    {
+        while (_firstUnused < _subject.Length && _used[_firstUnused])
+        {
+            _firstUnused++;
+        }
+
+        for (var j = _firstUnused; j < _subject.Length; j++)
+        {
+            if (!_used[j] && _run.Probe(_subject[j], item, index))
+            {
+                return j;
+            }
+        }
+
+        return -1;
+    }
+
+    private sealed class HashIndex
+    {
+        public readonly Dictionary<int, int> Buckets = new();
+        public int[] Heads = [];
+        public int[] Next = [];
+        public int WildcardHead = -1;
+
+        public static HashIndex Build(object?[] subject, MemberGetter[]? keys)
+        {
+            var index = new HashIndex { Next = new int[subject.Length], Heads = new int[subject.Length] };
+            var buckets = 0;
+            for (var j = subject.Length - 1; j >= 0; j--)
+            {
+                int hash;
+                var hashed = keys is null ? TryHashScalar(subject[j], out hash) : TryHash(subject[j], keys, out hash);
+                if (!hashed)
+                {
+                    index.Next[j] = index.WildcardHead;
+                    index.WildcardHead = j;
+                    continue;
+                }
+
+                ref var bucket = ref CollectionsMarshal.GetValueRefOrAddDefault(index.Buckets, hash, out var exists);
+                if (!exists)
+                {
+                    bucket = buckets++;
+                    index.Heads[bucket] = -1;
+                }
+
+                index.Next[j] = index.Heads[bucket];
+                index.Heads[bucket] = j;
+            }
+
+            return index;
+        }
+
+        private static bool TryHashScalar(object? item, out int hash)
+        {
+            if (item is not null && MemberCache.IsScalarType(item.GetType()))
+            {
+                hash = ScalarHash(item);
+                return true;
+            }
+
+            hash = 0;
+            return false;
+        }
+    }
+}

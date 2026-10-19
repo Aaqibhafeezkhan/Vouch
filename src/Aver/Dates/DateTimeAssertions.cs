@@ -84,7 +84,16 @@ public readonly struct DateTimeAssertions
     }
 
     public AndConstraint<DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<DateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<DateTimeAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }
 
 public readonly struct NullableDateTimeAssertions
@@ -198,5 +207,14 @@ public readonly struct NullableDateTimeAssertions
     }
 
     public AndConstraint<NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<NullableDateTimeAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<NullableDateTimeAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }

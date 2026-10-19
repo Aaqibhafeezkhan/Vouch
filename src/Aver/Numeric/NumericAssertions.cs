@@ -111,7 +111,16 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
     }
 
     public AndConstraint<NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<NumericAssertions<T>> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<NumericAssertions<T>> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }
 
 public static class NumericApproximationExtensions

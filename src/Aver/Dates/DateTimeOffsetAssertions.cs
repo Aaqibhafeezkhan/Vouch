@@ -84,7 +84,16 @@ public readonly struct DateTimeOffsetAssertions
     }
 
     public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<DateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<DateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }
 
 public readonly struct NullableDateTimeOffsetAssertions
@@ -198,5 +207,14 @@ public readonly struct NullableDateTimeOffsetAssertions
     }
 
     public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<NullableDateTimeOffsetAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<NullableDateTimeOffsetAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }

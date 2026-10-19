@@ -143,7 +143,16 @@ public readonly struct ObjectAssertions
     }
 
     public AndConstraint<ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<ObjectAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<ObjectAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 
     private string TypeOrNull() => Subject is null ? "null" : Formatter.Format(Subject.GetType());
 }

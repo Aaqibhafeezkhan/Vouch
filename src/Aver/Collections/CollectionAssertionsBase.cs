@@ -269,6 +269,64 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation)
+    {
+        ArgumentNullException.ThrowIfNull(expectation);
+        return CheckEquivalent(expectation, EquivalencyOptions.Default);
+    }
+
+    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(expectation);
+        return CheckEquivalent(expectation, Equivalency.Options(configure));
+    }
+
+    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(params TExpectation[] expectation)
+    {
+        ArgumentNullException.ThrowIfNull(expectation);
+        if (expectation.Length == 1 && expectation[0] is System.Collections.IEnumerable single and not string && SpreadsSingleArgument(single))
+        {
+            return CheckEquivalent(single, EquivalencyOptions.Default);
+        }
+
+        return CheckEquivalent(expectation, EquivalencyOptions.Default);
+    }
+
+    private static bool SpreadsSingleArgument(System.Collections.IEnumerable single) =>
+        !Equivalency.IsCollection(typeof(T)) || Equivalency.ElementsAreCollections(single.GetType());
+
+    private AndConstraint<TSelf> CheckEquivalent(object expectation, EquivalencyOptions options)
+    {
+        object? subject = null;
+        if (!IsNull)
+        {
+            subject = Equivalency.IsDictionary(Source!) && Equivalency.IsDictionary(expectation) ? Source : Items;
+        }
+
+        Equivalency.Require(subject, expectation, expectation.GetType(), options, Name);
+        return And();
+    }
+
+    public AndConstraint<TSelf> NotContainEquivalentOf<TExpectation>(TExpectation unexpected)
+    {
+        if (IsNull)
+        {
+            FailNull($"not to contain an item equivalent to {Formatter.Format(unexpected)}");
+        }
+
+        var items = Items;
+        var options = EquivalencyOptions.Default;
+        for (var i = 0; i < items.Count; i++)
+        {
+            if (Equivalency.AreEquivalent(items[i], unexpected, options))
+            {
+                Fail.With($"Expected {Name} not to contain an item equivalent to {Formatter.Format(unexpected)}, but found one at index {i}.");
+            }
+        }
+
+        return And();
+    }
+
     public AndConstraint<TSelf> NotContain(Expression<Func<T, bool>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);

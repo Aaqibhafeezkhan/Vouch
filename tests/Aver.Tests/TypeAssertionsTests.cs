@@ -110,6 +110,4 @@ public class TypeAssertionsTests
         object o = "z";
         Assert.Equal("Expected o to be one of [\"a\", \"b\"], but found \"z\".", Assert.Throws<AverException>(() => o.Should().BeOneOf("a", "b")).Message);
     }
-
-    [Fact] public void BeEquivalentTo_is_not_implemented_yet() { object o = 1; Assert.Throws<NotImplementedException>(() => o.Should().BeEquivalentTo(1)); }
 }

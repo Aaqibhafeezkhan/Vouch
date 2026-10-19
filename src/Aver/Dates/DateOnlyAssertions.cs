@@ -73,7 +73,16 @@ public readonly struct DateOnlyAssertions
     }
 
     public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<DateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<DateOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }
 
 public readonly struct NullableDateOnlyAssertions
@@ -170,5 +179,14 @@ public readonly struct NullableDateOnlyAssertions
     }
 
     public AndConstraint<NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation)
-        => throw new NotImplementedException();
+        => CheckEquivalent(expectation, EquivalencyOptions.Default);
+
+    public AndConstraint<NullableDateOnlyAssertions> BeEquivalentTo<TExpectation>(TExpectation expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+        => CheckEquivalent(expectation, Equivalency.Options(configure));
+
+    private AndConstraint<NullableDateOnlyAssertions> CheckEquivalent<TExpectation>(TExpectation expectation, EquivalencyOptions options)
+    {
+        Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
+        return new(this);
+    }
 }

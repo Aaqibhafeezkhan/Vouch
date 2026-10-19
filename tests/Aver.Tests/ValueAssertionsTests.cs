@@ -69,10 +69,6 @@ public class ValueAssertionsTests
     }
 
     [Fact]
-    public void BeEquivalentTo_is_not_implemented_yet() =>
-        Assert.Throws<NotImplementedException>(() => 1.Should().BeEquivalentTo(1));
-
-    [Fact]
     public void Missing_expression_reads_as_value() =>
         Assert.Equal("Expected value to be 2, but found 1.",
             Assert.Throws<AverException>(() => new ValueAssertions<int>(1, null).Be(2)).Message);
@@ -124,12 +120,5 @@ public class ValueAssertionsTests
     {
         int? n = null;
         Assert.Equal("Expected n not to be null, but it was.", Assert.Throws<AverException>(() => n.Should().NotBeNull()).Message);
-    }
-
-    [Fact]
-    public void Nullable_BeEquivalentTo_is_not_implemented_yet()
-    {
-        int? n = 1;
-        Assert.Throws<NotImplementedException>(() => n.Should().BeEquivalentTo(1));
     }
 }

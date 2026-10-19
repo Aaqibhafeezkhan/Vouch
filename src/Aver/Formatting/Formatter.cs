@@ -280,7 +280,7 @@ internal static class Formatter
         }
     }
 
-    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, HashSet<object> path, List<MemberInfo>? only = null)
+    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, HashSet<object> path, MemberGetter[]? only = null)
     {
         var anonymous = IsAnonymous(type);
         if (!anonymous)
@@ -294,15 +294,15 @@ internal static class Formatter
             return;
         }
 
-        var members = only ?? MembersOf(type);
-        if (members.Count == 0)
+        var members = only ?? MemberCache.For(type);
+        if (members.Length == 0)
         {
             sb.Append("{ }");
             return;
         }
 
         sb.Append("{ ");
-        for (var i = 0; i < members.Count; i++)
+        for (var i = 0; i < members.Length; i++)
         {
             if (i > 0)
             {
@@ -313,7 +313,7 @@ internal static class Formatter
             object? memberValue;
             try
             {
-                memberValue = members[i] is PropertyInfo p ? p.GetValue(value) : ((FieldInfo)members[i]).GetValue(value);
+                memberValue = members[i].Get(value);
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
             {
@@ -334,22 +334,7 @@ internal static class Formatter
         sb.Append(" }");
     }
 
-    private static List<MemberInfo> MembersOf(Type type)
-    {
-        var members = new List<MemberInfo>();
-        foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (p.GetIndexParameters().Length == 0 && p.GetMethod is not null)
-            {
-                members.Add(p);
-            }
-        }
-
-        members.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.Instance));
-        return members;
-    }
-
-    private static List<MemberInfo>? SafeMembers(Type type)
+    private static MemberGetter[]? SafeMembers(Type type)
     {
         string? name = null;
         if (typeof(Task).IsAssignableFrom(type))
@@ -366,7 +351,7 @@ internal static class Formatter
         }
 
         var property = name is null ? null : type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
-        return property is null ? null : [property];
+        return property is null ? null : [new MemberGetter(property)];
     }
 
     private static bool OverridesToString(Type type)
@@ -375,10 +360,12 @@ internal static class Formatter
         return declaring is not null && declaring != typeof(object) && declaring != typeof(ValueType);
     }
 
-    private static bool IsAnonymous(Type type) =>
+    internal static bool IsSafeOnly(Type type) => SafeMembers(type) is not null;
+
+    internal static bool IsAnonymous(Type type) =>
         type.IsDefined(typeof(CompilerGeneratedAttribute), false) && type.Name.Contains("AnonymousType", StringComparison.Ordinal);
 
-    private static bool IsRecord(Type type)
+    internal static bool IsRecord(Type type)
     {
         const BindingFlags all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
         return type.GetProperty("EqualityContract", all) is not null
@@ -386,7 +373,7 @@ internal static class Formatter
             || (type.IsValueType && type.GetMethod("PrintMembers", all, null, [typeof(StringBuilder)], null) is not null);
     }
 
-    private static string TypeName(Type type)
+    internal static string TypeName(Type type)
     {
         if (type.IsArray)
         {
