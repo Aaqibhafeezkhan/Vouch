@@ -24,6 +24,7 @@ public class PublicApiTests
             {
                 "System.Diagnostics.DebuggerNonUserCodeAttribute",
                 "System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+                "System.Runtime.CompilerServices.InternalsVisibleToAttribute",
                 "System.Runtime.CompilerServices.RefSafetyRulesAttribute",
                 "System.Runtime.Versioning.TargetFrameworkAttribute",
                 "System.Reflection.AssemblyMetadataAttribute",
@@ -91,6 +92,11 @@ internal static class ApiApproval
         {
             lines.Add($"Added ({added.Length}):");
             lines.AddRange(added.Take(25).Select(l => $"  + {l.Trim()}"));
+        }
+
+        if (lines.Count == 0)
+        {
+            return "No lines were added or removed (order, duplicates or whitespace changed). Compare against the received file.\n";
         }
 
         return string.Join("\n", lines) + "\n";

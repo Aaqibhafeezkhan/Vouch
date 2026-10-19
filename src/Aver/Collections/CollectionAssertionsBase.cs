@@ -10,7 +10,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
     private readonly string? _expression;
     private IReadOnlyList<T>? _list;
 
-    protected CollectionAssertionsBase(IEnumerable<T>? subject, string? expression)
+    private protected CollectionAssertionsBase(IEnumerable<T>? subject, string? expression)
     {
         Source = subject;
         _list = subject as IReadOnlyList<T>;
@@ -19,11 +19,11 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     public IReadOnlyList<T>? Subject => Source is null ? null : Items;
 
-    protected IEnumerable<T>? Source { get; }
+    private protected IEnumerable<T>? Source { get; }
 
-    protected bool IsNull => Source is null;
+    private protected bool IsNull => Source is null;
 
-    protected IReadOnlyList<T> Items => _list ??= Materialise();
+    private protected IReadOnlyList<T> Items => _list ??= Materialise();
 
     private List<T> Materialise()
     {
@@ -46,12 +46,12 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return list;
     }
 
-    protected string Name => Fail.Name(_expression);
+    private protected string Name => Fail.Name(_expression);
 
     [DoesNotReturn]
     private void FailNull(string expectation) => Fail.With($"Expected {Name} {expectation}, but found null.");
 
-    protected IReadOnlyList<T> Required(string expectation)
+    private protected IReadOnlyList<T> Required(string expectation)
     {
         if (IsNull)
         {
@@ -69,7 +69,7 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         _ => Items.Count,
     };
 
-    protected AndConstraint<TSelf> And() => new((TSelf)this);
+    private protected AndConstraint<TSelf> And() => new((TSelf)this);
 
     public AndConstraint<TSelf> BeEmpty()
     {
@@ -701,15 +701,15 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return indexes;
     }
 
-    protected static string Plural(int count) => count == 1 ? "1 item" : $"{count} items";
+    private protected static string Plural(int count) => count == 1 ? "1 item" : $"{count} items";
 
-    protected static string Listing(IReadOnlyList<T> items, List<int>? indexes = null) =>
+    private protected static string Listing(IReadOnlyList<T> items, List<int>? indexes = null) =>
         (indexes?.Count ?? items.Count) == 0 ? "." : ":" + Lines(items, indexes);
 
-    protected static string NotFound(IReadOnlyList<T> items) =>
+    private protected static string NotFound(IReadOnlyList<T> items) =>
         items.Count == 0 ? "but it was empty." : "but it did not. It has:" + Lines(items);
 
-    protected static string HasTail(IReadOnlyList<T> items) =>
+    private protected static string HasTail(IReadOnlyList<T> items) =>
         items.Count == 0 ? "" : " It has:" + Lines(items);
 
     private static string Lines(IReadOnlyList<T> items, List<int>? indexes = null)

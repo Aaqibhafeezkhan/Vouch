@@ -1,4 +1,3 @@
-[assembly: System.Runtime.CompilerServices.InternalsVisibleTo("Aver.Tests")]
 namespace Aver
 {
     public readonly struct ActionAssertions
@@ -70,14 +69,8 @@ namespace Aver
     public abstract class CollectionAssertionsBase<T, TSelf>
         where TSelf : Aver.CollectionAssertionsBase<T, TSelf>
     {
-        protected CollectionAssertionsBase(System.Collections.Generic.IEnumerable<T>? subject, string? expression) { }
-        protected bool IsNull { get; }
-        protected System.Collections.Generic.IReadOnlyList<T> Items { get; }
-        protected string Name { get; }
-        protected System.Collections.Generic.IEnumerable<T>? Source { get; }
         public System.Collections.Generic.IReadOnlyList<T>? Subject { get; }
         public Aver.AndConstraint<TSelf> AllSatisfy(System.Action<T> assertion) { }
-        protected Aver.AndConstraint<TSelf> And() { }
         public Aver.AndConstraint<TSelf> BeEmpty() { }
         public Aver.AndConstraint<TSelf> BeEmpty(string because) { }
         public Aver.AndConstraint<TSelf> BeEquivalentTo(params T[] expectation) { }
@@ -132,11 +125,6 @@ namespace Aver
         public Aver.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate) { }
         public Aver.AndConstraint<TSelf> OnlyContain(System.Linq.Expressions.Expression<System.Func<T, bool>> predicate, string because) { }
         public Aver.AndConstraint<TSelf> OnlyHaveUniqueItems() { }
-        protected System.Collections.Generic.IReadOnlyList<T> Required(string expectation) { }
-        protected static string HasTail(System.Collections.Generic.IReadOnlyList<T> items) { }
-        protected static string Listing(System.Collections.Generic.IReadOnlyList<T> items, System.Collections.Generic.List<int>? indexes = null) { }
-        protected static string NotFound(System.Collections.Generic.IReadOnlyList<T> items) { }
-        protected static string Plural(int count) { }
     }
     public static class ComparableValueAssertions
     {
@@ -199,7 +187,6 @@ namespace Aver
     }
     public sealed class EquivalencyOptions
     {
-        public EquivalencyOptions() { }
         public Aver.EquivalencyOptions WithStrictOrdering() { }
     }
     public sealed class ExceptionAssertions<TException>

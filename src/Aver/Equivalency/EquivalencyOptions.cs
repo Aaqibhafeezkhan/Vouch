@@ -4,6 +4,10 @@ public sealed class EquivalencyOptions
 {
     internal static readonly EquivalencyOptions Default = new();
 
+    internal EquivalencyOptions()
+    {
+    }
+
     internal bool StrictOrdering { get; private init; }
 
     public EquivalencyOptions WithStrictOrdering() => new() { StrictOrdering = true };
