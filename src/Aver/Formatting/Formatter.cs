@@ -15,6 +15,9 @@ internal static class Formatter
     private const int MaxCountedRemainder = 100_000;
     private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
+    public static string FormatList<T>(T[] values) =>
+        "[" + string.Join(", ", values.Select(v => Format(v))) + "]";
+
     public static string Format(object? value)
     {
         var sb = new StringBuilder();

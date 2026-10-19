@@ -11,7 +11,7 @@ public class Bad { public int Value => throw new InvalidOperationException(); }
 public class BadToString { public override string ToString() => throw new InvalidOperationException(); }
 public class Named { public override string ToString() => "named!"; }
 public class Chain { public Chain? Inner { get; set; } }
-public enum Status { Active, Closed }
+public enum Status { Active, Closed, Draft }
 
 public class FormatterTests
 {
