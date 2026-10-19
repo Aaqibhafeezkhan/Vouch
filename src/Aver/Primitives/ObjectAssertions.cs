@@ -16,7 +16,7 @@ public readonly struct ObjectAssertions
     {
         if (!object.Equals(Subject, expected))
         {
-            Fail.With($"Expected {Fail.Name(_expression)} to be {Fail.Show(expected)}, but found {Fail.Show(Subject)}.");
+            Fail.With($"Expected {Fail.Name(_expression)} to be {Formatter.Format(expected)}, but found {Formatter.Format(Subject)}.");
         }
 
         return new(this);
@@ -26,7 +26,7 @@ public readonly struct ObjectAssertions
     {
         if (object.Equals(Subject, unexpected))
         {
-            Fail.With($"Expected {Fail.Name(_expression)} not to be {Fail.Show(unexpected)}, but it was.");
+            Fail.With($"Expected {Fail.Name(_expression)} not to be {Formatter.Format(unexpected)}, but it was.");
         }
 
         return new(this);
@@ -36,7 +36,7 @@ public readonly struct ObjectAssertions
     {
         if (Subject is not null)
         {
-            Fail.With($"Expected {Fail.Name(_expression)} to be null, but found {Fail.Show(Subject)}.");
+            Fail.With($"Expected {Fail.Name(_expression)} to be null, but found {Formatter.Format(Subject)}.");
         }
 
         return new(this);
