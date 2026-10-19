@@ -94,20 +94,32 @@ internal static class Numbers
     public static int Hash(object value)
     {
         TryRead(value, out var n);
+        float key;
         switch (n.Kind)
         {
             case Kind.Signed:
-                return SmallHash(n.Signed);
+                key = (float)(double)n.Signed;
+                break;
             case Kind.Unsigned:
-                return n.Unsigned < 10_000_000UL ? SmallHash((long)n.Unsigned) : 0;
+                key = (float)(double)n.Unsigned;
+                break;
             case Kind.Decimal:
-                return n.Decimal == decimal.Truncate(n.Decimal) && Math.Abs(n.Decimal) < 10_000_000m ? SmallHash((long)n.Decimal) : 0;
+                key = n.Decimal == decimal.Truncate(n.Decimal) && Math.Abs(n.Decimal) < 9.2e18m
+                    ? (float)(double)(long)n.Decimal
+                    : (float)(double)n.Decimal;
+                break;
             default:
-                return n.Double == Math.Floor(n.Double) && Math.Abs(n.Double) < 1e7 ? SmallHash((long)n.Double) : 0;
+                key = (float)n.Double;
+                break;
         }
-    }
 
-    private static int SmallHash(long v) => v > -10_000_000L && v < 10_000_000L ? v.GetHashCode() : 0;
+        if (float.IsNaN(key))
+        {
+            return 1;
+        }
+
+        return key == 0f ? 0 : key.GetHashCode();
+    }
 
     private static bool TryRead(object value, out Number number)
     {

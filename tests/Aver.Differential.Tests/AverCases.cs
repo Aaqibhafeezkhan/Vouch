@@ -46,7 +46,9 @@ public static class AverCases
         act.Should().Throw<T>();
     };
 
-    private static readonly Lazy<IReadOnlyDictionary<string, Action>> PassRows = new(() => Hand.Concat(BuildGrid()).ToDictionary(p => p.Key, p => p.Value));
+    private static readonly Lazy<IReadOnlyDictionary<string, Action>> PassRows = new(BuildPass);
+
+    private static IReadOnlyDictionary<string, Action> BuildPass() => Hand.Concat(BuildGrid()).ToDictionary(p => p.Key, p => p.Value);
 
     public static IReadOnlyDictionary<string, Action> Pass => PassRows.Value;
 
