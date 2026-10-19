@@ -2,6 +2,9 @@
   <Folder Name="/src/">
     <Project Path="src/Aver/Aver.csproj" />
   </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Aver.Benchmarks/Aver.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Aver.ApiApproval.Tests/Aver.ApiApproval.Tests.csproj" />
     <Project Path="tests/Aver.Tests/Aver.Tests.csproj" />
