@@ -310,20 +310,109 @@ public class ExceptionAssertionsTests
             await MsgAsync(() => act.Should().ThrowAsync<InvalidOperationException>()));
     }
 
-    [Fact]
-    public async Task ThrowAsync_does_not_deadlock_on_a_single_threaded_context()
+    private sealed class PumpContext : SynchronizationContext
     {
-        var previous = SynchronizationContext.Current;
-        SynchronizationContext.SetSynchronizationContext(new SynchronizationContext());
-        try
+        private readonly System.Collections.Concurrent.BlockingCollection<(SendOrPostCallback Callback, object? State)> _queue = new();
+        private int _posts;
+
+        public int Posts => _posts;
+
+        public override void Post(SendOrPostCallback d, object? state)
         {
-            Func<Task> act = async () => { await Task.Delay(10); throw new InvalidOperationException(); };
-            await act.Should().ThrowAsync<InvalidOperationException>();
+            Interlocked.Increment(ref _posts);
+            _queue.Add((d, state));
         }
-        finally
+
+        public Task RunOnPumpThread(Func<Task> body, TimeSpan timeout)
         {
-            SynchronizationContext.SetSynchronizationContext(previous);
+            Task? result = null;
+            var thread = new Thread(() =>
+            {
+                SetSynchronizationContext(this);
+                result = body();
+                while (!result.IsCompleted)
+                {
+                    if (_queue.TryTake(out var work, 20))
+                    {
+                        work.Callback(work.State);
+                    }
+                }
+            })
+            { IsBackground = true };
+            thread.Start();
+            Assert.True(thread.Join(timeout), "the assertion blocked the single-threaded context");
+            return result!;
         }
+    }
+
+    [Fact]
+    public async Task ThrowAsync_neither_blocks_nor_captures_a_single_threaded_context()
+    {
+        var context = new PumpContext();
+        Func<Task> act = async () => { await Task.Delay(50).ConfigureAwait(false); throw new InvalidOperationException(); };
+        var task = context.RunOnPumpThread(() => act.Should().ThrowAsync<InvalidOperationException>(), TimeSpan.FromSeconds(5));
+        await task;
+        Assert.Equal(0, context.Posts);
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_neither_blocks_nor_captures_a_single_threaded_context()
+    {
+        var context = new PumpContext();
+        Func<Task> act = async () => await Task.Delay(50).ConfigureAwait(false);
+        await context.RunOnPumpThread(() => act.Should().NotThrowAsync(), TimeSpan.FromSeconds(5));
+        Assert.Equal(0, context.Posts);
+    }
+
+    [Fact]
+    public async Task ThrowAsync_does_not_block_when_the_subject_resumes_on_the_single_threaded_context()
+    {
+        var context = new PumpContext();
+        Func<Task> act = async () => { await Task.Delay(50); throw new InvalidOperationException(); };
+        await context.RunOnPumpThread(() => act.Should().ThrowAsync<InvalidOperationException>(), TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_does_not_block_when_the_subject_resumes_on_the_single_threaded_context()
+    {
+        var context = new PumpContext();
+        Func<Task> act = async () => await Task.Delay(50);
+        await context.RunOnPumpThread(() => act.Should().NotThrowAsync(), TimeSpan.FromSeconds(5));
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_fails_on_a_canceled_task_with_exact_message()
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        Func<Task> act = () => Task.FromCanceled(cts.Token);
+        var message = await MsgAsync(() => act.Should().NotThrowAsync());
+        Assert.StartsWith("Expected act not to throw, but it threw TaskCanceledException:\n  \"A task was canceled.\"", message);
+    }
+
+    [Fact]
+    public async Task ThrowAsync_accepts_a_derived_TaskCanceledException()
+    {
+        Func<Task> act = () => Task.FromException(new TaskCanceledException("stopped"));
+        var result = await act.Should().ThrowAsync<OperationCanceledException>();
+        Assert.IsType<TaskCanceledException>(result.Which);
+    }
+
+    [Fact]
+    public async Task ThrowAsync_fails_when_a_base_OperationCanceledException_is_thrown_for_a_derived_expectation()
+    {
+        Func<Task> act = () => throw new OperationCanceledException("stopped");
+        Assert.Equal("Expected act to throw TaskCanceledException, but it threw OperationCanceledException:\n  \"stopped\"",
+            await MsgAsync(() => act.Should().ThrowAsync<TaskCanceledException>()));
+    }
+
+    [Fact]
+    public void WithMessage_on_the_task_checks_arguments_before_returning_a_task()
+    {
+        Func<Task> act = () => throw new InvalidOperationException("x");
+        var pending = act.Should().ThrowAsync<InvalidOperationException>();
+        Assert.Throws<ArgumentNullException>(() => { _ = pending.WithMessage(null!); });
+        Assert.Throws<ArgumentNullException>(() => { _ = ExceptionTaskExtensions.WithMessage<InvalidOperationException>(null!, "x"); });
     }
 
     [Fact]
