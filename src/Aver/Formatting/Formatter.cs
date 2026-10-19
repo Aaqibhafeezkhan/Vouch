@@ -70,6 +70,10 @@ internal static class Formatter
             {
                 WriteDictionary(sb, dictionary, depth, path);
             }
+            else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+            {
+                WriteKeyValuePair(sb, value, type, depth, path);
+            }
             else if (value is IEnumerable enumerable)
             {
                 WriteSequence(sb, enumerable, depth, path);
@@ -223,6 +227,14 @@ internal static class Formatter
         }
 
         sb.Append('}');
+    }
+
+    private static void WriteKeyValuePair(StringBuilder sb, object pair, Type type, int depth, HashSet<object> path)
+    {
+        sb.Append('[');
+        Write(sb, type.GetProperty("Key")!.GetValue(pair), depth + 1, path);
+        sb.Append("] = ");
+        Write(sb, type.GetProperty("Value")!.GetValue(pair), depth + 1, path);
     }
 
     private static void WriteRemainder(StringBuilder sb, IEnumerator enumerator, object source, int shown)

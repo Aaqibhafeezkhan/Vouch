@@ -34,6 +34,9 @@ public class FormatterTests
     [InlineData(2.5f, "2.5f")]
     public void Formats_simple_values(object? value, string expected) => Assert.Equal(expected, Formatter.Format(value));
 
+    [Fact] public void Key_value_pair_uses_dictionary_style() => Assert.Equal("[\"a\"] = 1", Formatter.Format(new KeyValuePair<string, int>("a", 1)));
+    [Fact] public void Key_value_pair_with_null_value() => Assert.Equal("[\"a\"] = null", Formatter.Format(new KeyValuePair<string, string?>("a", null)));
+
     [Fact] public void Escapes_backslash_and_tab() => Assert.Equal("\"a\\\\b\\t\\r\"", Formatter.Format("a\\b\t\r"));
     [Fact] public void Double_nan() => Assert.Equal("NaN", Formatter.Format(double.NaN));
     [Fact] public void Decimal_has_m_suffix() => Assert.Equal("100m", Formatter.Format(100m));
