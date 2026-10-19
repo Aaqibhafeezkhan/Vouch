@@ -44,4 +44,4 @@ None.
 
 - Where the reason sits in the message. Aver appends it at the end. AwesomeAssertions places it mid-sentence.
 - `Match<T>` on a null subject or a subject of another type. AwesomeAssertions throws `NullReferenceException` or `InvalidCastException`. Aver fails with a message.
-- A `Throw<T>` that finds several matching inner exceptions in an `AggregateException` returns the first. AwesomeAssertions throws when `Which` is read.
+- `Which` after a `Throw<T>` that matched several inner exceptions fails with a plain message. AwesomeAssertions throws from `Which` too. `WithMessage` passes when any matching inner exception matches.

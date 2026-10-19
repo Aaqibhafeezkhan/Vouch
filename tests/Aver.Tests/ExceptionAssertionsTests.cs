@@ -106,6 +106,40 @@ public class ExceptionAssertionsTests
     }
 
     [Fact]
+    public void Throw_of_Exception_fails_on_an_empty_AggregateException()
+    {
+        Action act = () => throw new AggregateException();
+        Assert.StartsWith("Expected act to throw Exception, but it threw AggregateException:", Msg(() => act.Should().Throw<Exception>()));
+        act.Should().Throw<AggregateException>();
+    }
+
+    [Fact]
+    public void WithMessage_passes_when_any_matching_inner_exception_matches()
+    {
+        Action act = () => throw new AggregateException(new InvalidOperationException("x"), new ArgumentException("inner msg"));
+        act.Should().Throw<Exception>().WithMessage("inner*");
+        act.Should().Throw<Exception>().WithMessage("x");
+        Assert.Equal("Expected act's exception message to match \"zzz\", but found \"x | inner msg\".", Msg(() => act.Should().Throw<Exception>().WithMessage("zzz")));
+    }
+
+    [Fact]
+    public void Which_fails_when_several_inner_exceptions_match()
+    {
+        Action act = () => throw new AggregateException(new ArgumentException("a"), new ArgumentException("b"));
+        var assertions = act.Should().Throw<ArgumentException>();
+        assertions.WithMessage("b");
+        Assert.Equal("More than one exception was thrown. Aver cannot tell which one was meant.", Assert.Throws<AverException>(() => assertions.Which).Message);
+    }
+
+    [Fact]
+    public void Throw_of_Exception_looks_at_the_inner_exceptions_not_the_aggregate()
+    {
+        Action act = () => throw new AggregateException("outer", new ArgumentException("inner"));
+        Assert.NotNull(Msg(() => act.Should().Throw<Exception>().WithMessage("outer*")));
+        act.Should().Throw<AggregateException>().WithMessage("outer*");
+    }
+
+    [Fact]
     public void Throw_fails_on_an_empty_AggregateException()
     {
         Action act = () => throw new AggregateException();

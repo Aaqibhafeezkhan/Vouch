@@ -12,8 +12,87 @@ public static class AverCases
 
     private static Action StringMatch(string subject, string pattern) => () => subject.Should().Match(pattern);
 
-    public static IReadOnlyDictionary<string, Action> Pass { get; } = new Dictionary<string, Action>
+    private static readonly object[] GridValues =
     {
+        0.1f, 0.1m, 0.1d, 9007199254740993L, 9007199254740993m, 9007199254740992d, decimal.MaxValue,
+        (double)decimal.MaxValue, float.NaN, double.NaN, 1, 1L, 1.0, 1.0f, 1m, ulong.MaxValue,
+        1.8446744073709552E19, long.MaxValue, 9.2233720368547758E18d, double.PositiveInfinity,
+        (byte)1, 123456792f, 123456792, 0.5f, 0.5m, 0.5d, -1, -1m, -1.0d,
+    };
+
+    private static Dictionary<string, Action> BuildGrid()
+    {
+        var rows = new Dictionary<string, Action>();
+        for (var i = 0; i < GridValues.Length; i++)
+        {
+            for (var j = 0; j < GridValues.Length; j++)
+            {
+                var a = GridValues[i];
+                var b = GridValues[j];
+                var key = $"{a.GetType().Name} {a} against {b.GetType().Name} {b} ({i},{j})";
+                rows[$"grid be {key}"] = () => a.Should().Be(b);
+                rows[$"grid notbe {key}"] = () => a.Should().NotBe(b);
+                rows[$"grid equivalent {key}"] = () => a.Should().BeEquivalentTo(b);
+                rows[$"grid oneof {key}"] = () => a.Should().BeOneOf(b, "other");
+            }
+        }
+
+        return rows;
+    }
+
+    private static Action AggregateThrow<T>(params Exception[] inner) where T : Exception => () =>
+    {
+        Action act = Throws.Of(new AggregateException(inner));
+        act.Should().Throw<T>();
+    };
+
+    private static readonly Lazy<IReadOnlyDictionary<string, Action>> PassRows = new(() => Hand.Concat(BuildGrid()).ToDictionary(p => p.Key, p => p.Value));
+
+    public static IReadOnlyDictionary<string, Action> Pass => PassRows.Value;
+
+    private static readonly Dictionary<string, Action> Hand = new()
+    {
+        ["throw exception on empty aggregate"] = AggregateThrow<Exception>(),
+        ["throw aggregate on empty aggregate"] = AggregateThrow<AggregateException>(),
+        ["throw exception on nested empty aggregate"] = () =>
+        {
+            Action act = Throws.Of(new AggregateException(new AggregateException()));
+            act.Should().Throw<Exception>();
+        },
+        ["throw aggregate on aggregate of argument"] = AggregateThrow<AggregateException>(new ArgumentException("a")),
+        ["withmessage any of several inners"] = () =>
+        {
+            Action act = Throws.Of(new AggregateException(new InvalidOperationException("x"), new ArgumentException("inner msg")));
+            act.Should().Throw<Exception>().WithMessage("inner*");
+        },
+        ["withmessage first of several inners"] = () =>
+        {
+            Action act = Throws.Of(new AggregateException(new InvalidOperationException("x"), new ArgumentException("inner msg")));
+            act.Should().Throw<Exception>().WithMessage("x");
+        },
+        ["withmessage none of several inners"] = () =>
+        {
+            Action act = Throws.Of(new AggregateException(new InvalidOperationException("x"), new ArgumentException("inner msg")));
+            act.Should().Throw<Exception>().WithMessage("zzz");
+        },
+        ["withmessage outer aggregate text on unwrapped throw"] = () =>
+        {
+            Action act = Throws.Of(new AggregateException(new InvalidOperationException("x")));
+            act.Should().Throw<Exception>().WithMessage("One or more*");
+        },
+        ["decimal against double beyond 2^53"] = () => ((object)9007199254740993m).Should().Be(9007199254740992d),
+        ["decimal max against its double"] = () => ((object)decimal.MaxValue).Should().Be((double)decimal.MaxValue),
+        ["float against decimal"] = () => ((object)0.1f).Should().Be(0.1m),
+        ["float nan against double nan"] = () => ((object)float.NaN).Should().Be(double.NaN),
+        ["float nan against double nan notbe"] = () => ((object)float.NaN).Should().NotBe(double.NaN),
+        ["float nan against double nan equivalent"] = () => ((object)float.NaN).Should().BeEquivalentTo(double.NaN),
+        ["oneof int against longs"] = () => ((object)1).Should().BeOneOf(5L, 1L),
+        ["oneof int against ints"] = () => ((object)1).Should().BeOneOf(5, 1),
+        ["oneof float against double"] = () => ((object)0.5f).Should().BeOneOf(0.5d),
+        ["oneof byte against sbyte"] = () => ((object)(byte)5).Should().BeOneOf((sbyte)5),
+        ["equivalent decimal member against double member"] = () => new[] { new object[] { 9007199254740993m } }.Should().BeEquivalentTo(new[] { new object[] { 9007199254740992d } }),
+        ["equivalent two hundred decimals against longs reversed"] = () => Enumerable.Range(0, 200).Select(i => (object)(9007199254740993m + i)).ToArray()
+            .Should().BeEquivalentTo(Enumerable.Range(0, 200).Select(i => (object)(9007199254740993L + i)).Reverse().ToArray()),
         ["withmessage exact"] = WithMessage("abc", "abc"),
         ["withmessage star suffix"] = WithMessage("abcdef", "abc*"),
         ["withmessage star prefix"] = WithMessage("abcdef", "*def"),

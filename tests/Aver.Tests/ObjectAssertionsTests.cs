@@ -79,5 +79,43 @@ public class ObjectAssertionsTests
     [Fact] public void Be_does_not_compare_a_number_to_an_enum() { object o = 1; Assert.Throws<AverException>(() => o.Should().Be(DayOfWeek.Monday)); }
     [Fact] public void Be_message_for_a_number_of_another_type() { object o = 1; Assert.Equal("Expected o to be 2L, but found 1.", Msg(() => o.Should().Be(2L))); }
     [Fact] public void NotBe_fails_on_the_same_value_in_another_numeric_type() { object o = 1; Assert.Throws<AverException>(() => o.Should().NotBe(1L)); }
-    [Fact] public void BeOneOf_matches_numbers_across_types() { object o = 1; o.Should().BeOneOf(5L, 1L); }
+    [Fact]
+    public void BeOneOf_does_not_match_numbers_across_types()
+    {
+        object o = 1;
+        Assert.Throws<AverException>(() => o.Should().BeOneOf(5L, 1L));
+        Assert.Throws<AverException>(() => o.Should().BeOneOf(1.0));
+        object b = (byte)5;
+        Assert.Throws<AverException>(() => b.Should().BeOneOf((sbyte)5));
+        object f = 0.5f;
+        Assert.Throws<AverException>(() => f.Should().BeOneOf(0.5d));
+        object m = 0.1m;
+        Assert.Throws<AverException>(() => m.Should().BeOneOf(0.1d));
+    }
+    [Fact] public void BeOneOf_matches_the_same_type() { object o = 1; o.Should().BeOneOf(5, 1); }
+    [Theory]
+    [InlineData(9007199254740993L, 9007199254740992d)]
+    [InlineData(9007199254740992L, 9007199254740992d)]
+    [InlineData(9007199254740990L, 9007199254740992d)]
+    public void Be_does_not_equate_a_decimal_with_a_double_that_rounds_to_it(long whole, double other)
+    {
+        object d = (decimal)whole;
+        Assert.Throws<AverException>(() => d.Should().Be(other));
+        object o = other;
+        Assert.Throws<AverException>(() => o.Should().Be((decimal)whole));
+        d.Should().NotBe(other);
+    }
+    [Fact]
+    public void Be_does_not_equate_decimal_max_with_its_double()
+    {
+        object d = decimal.MaxValue;
+        Assert.Throws<AverException>(() => d.Should().Be((double)decimal.MaxValue));
+        d.Should().NotBe((double)decimal.MaxValue);
+        object big = 79228162514264337593543950335m;
+        Assert.Throws<AverException>(() => big.Should().Be(7.9228162514264338E28d));
+    }
+    [Fact] public void Be_equates_a_float_with_the_decimal_it_prints_as() { object f = 0.1f; f.Should().Be(0.1m); object m = 0.1m; m.Should().Be(0.1f); }
+    [Fact] public void Be_equates_a_float_nan_with_a_double_nan() { object f = float.NaN; f.Should().Be(double.NaN); f.Should().NotBe(1.0); Assert.Throws<AverException>(() => f.Should().NotBe(double.NaN)); }
+    [Fact] public void Be_does_not_equate_a_decimal_with_nan_or_infinity() { object m = 1m; Assert.Throws<AverException>(() => m.Should().Be(double.NaN)); Assert.Throws<AverException>(() => m.Should().Be(double.PositiveInfinity)); }
+    [Fact] public void Be_equates_a_float_with_a_whole_int_beyond_seven_digits() { object f = 123456792f; f.Should().Be(123456792); }
 }

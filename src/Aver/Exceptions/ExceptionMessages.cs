@@ -33,28 +33,38 @@ internal static class ExceptionMessages
 
     public static ExceptionAssertions<T> Check<T>(string name, Exception? thrown) where T : Exception
     {
-        if (thrown is AggregateException aggregate)
-        {
-            foreach (var inner in aggregate.Flatten().InnerExceptions)
-            {
-                if (inner is T unwrapped)
-                {
-                    return new ExceptionAssertions<T>(unwrapped, name);
-                }
-            }
-        }
-
-        if (thrown is T match)
-        {
-            return new ExceptionAssertions<T>(match, name);
-        }
-
         if (thrown is null)
         {
             DidNotThrow(name, typeof(T));
         }
         else
         {
+            var matches = new List<T>();
+            if (thrown is AggregateException aggregate)
+            {
+                foreach (var inner in aggregate.Flatten().InnerExceptions)
+                {
+                    if (inner is T unwrapped)
+                    {
+                        matches.Add(unwrapped);
+                    }
+                }
+
+                if (matches.Count == 0 && thrown is T self && typeof(AggregateException).IsAssignableFrom(typeof(T)))
+                {
+                    matches.Add(self);
+                }
+            }
+            else if (thrown is T match)
+            {
+                matches.Add(match);
+            }
+
+            if (matches.Count > 0)
+            {
+                return new ExceptionAssertions<T>(matches, name);
+            }
+
             ThrewWrongType(name, typeof(T), thrown);
         }
 

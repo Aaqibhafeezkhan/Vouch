@@ -2,17 +2,29 @@ namespace Aver;
 
 public sealed class ExceptionAssertions<TException> where TException : Exception
 {
+    private readonly IReadOnlyList<TException> _matches;
     private readonly string _name;
 
-    internal ExceptionAssertions(TException exception, string name)
+    internal ExceptionAssertions(IReadOnlyList<TException> matches, string name)
     {
-        Which = exception;
+        _matches = matches;
         _name = name;
     }
 
     internal string Name => _name;
 
-    public TException Which { get; }
+    public TException Which
+    {
+        get
+        {
+            if (_matches.Count > 1)
+            {
+                Fail.With("More than one exception was thrown. Aver cannot tell which one was meant.");
+            }
+
+            return _matches[0];
+        }
+    }
 
     public TException Subject => Which;
 
@@ -21,11 +33,16 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
     public ExceptionAssertions<TException> WithMessage(string pattern)
     {
         Wildcard.RequirePattern(pattern, nameof(pattern));
-        if (!Wildcard.MatchesMessage(Which.Message, pattern))
+        foreach (var match in _matches)
         {
-            Fail.With($"Expected {_name}'s exception message to match {Formatter.Format(pattern)}, but found {Formatter.Format(Which.Message)}.");
+            if (Wildcard.MatchesMessage(match.Message, pattern))
+            {
+                return this;
+            }
         }
 
+        var found = _matches.Count == 1 ? _matches[0].Message : string.Join(" | ", _matches.Select(m => m.Message));
+        Fail.With($"Expected {_name}'s exception message to match {Formatter.Format(pattern)}, but found {Formatter.Format(found)}.");
         return this;
     }
 }

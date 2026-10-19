@@ -232,6 +232,24 @@ public class EquivalencyTests
         Assert.Throws<AverException>(() => new IntBox { Value = 2 }.Should().BeEquivalentTo(new DoubleBox { Value = 1.5 }));
     }
     [Fact] public void Items_of_different_numeric_types_compare_by_value() { new[] { 1, 2 }.Should().BeEquivalentTo(new long[] { 2, 1 }); }
+    private sealed class DecimalBox { public decimal Value { get; init; } }
+    [Fact] public void A_decimal_member_does_not_equal_a_double_it_only_rounds_to() { Assert.Throws<AverException>(() => new DecimalBox { Value = 9007199254740993m }.Should().BeEquivalentTo(new DoubleBox { Value = 9007199254740992d })); }
+    [Fact] public void A_decimal_does_not_equal_a_double_in_a_nested_array() { Assert.Throws<AverException>(() => new[] { new object[] { 9007199254740993m } }.Should().BeEquivalentTo(new[] { new object[] { 9007199254740992d } })); }
+    [Fact] public void Float_nan_equals_double_nan() { object f = float.NaN; f.Should().BeEquivalentTo(double.NaN); }
+    [Fact]
+    public void Two_hundred_big_decimals_match_longs_in_reverse_order()
+    {
+        var subject = Enumerable.Range(0, 200).Select(i => (object)(9007199254740993m + i)).ToArray();
+        var expected = Enumerable.Range(0, 200).Select(i => (object)(9007199254740993L + i)).Reverse().ToArray();
+        subject.Should().BeEquivalentTo(expected);
+    }
+    [Fact]
+    public void Two_hundred_small_mixed_numbers_match_in_reverse_order()
+    {
+        var subject = Enumerable.Range(0, 200).Select(i => (object)(decimal)i).ToArray();
+        var expected = Enumerable.Range(0, 200).Select(i => (object)(double)i).Reverse().ToArray();
+        subject.Should().BeEquivalentTo(expected);
+    }
     [Fact] public void An_enum_does_not_equal_an_int() { object o = Color.Green; Assert.Throws<AverException>(() => o.Should().BeEquivalentTo(1)); }
 
     [Fact] public void Enums_of_different_types_compare_by_value() { Color.Green.Should().BeEquivalentTo(Shade.Green); Assert.Throws<AverException>(() => Color.Green.Should().BeEquivalentTo(Shade.Red)); }

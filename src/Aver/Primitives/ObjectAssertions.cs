@@ -134,7 +134,7 @@ public readonly struct ObjectAssertions
     {
         foreach (var value in validValues)
         {
-            if (Numbers.ValueEquals(Subject, value))
+            if (object.Equals(Subject, value))
             {
                 return new(this);
             }
