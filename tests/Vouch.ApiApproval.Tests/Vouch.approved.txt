@@ -25,9 +25,9 @@ namespace Vouch
     }
     public static class ArgumentExceptionExtensions
     {
-        public static Vouch.ExceptionAssertions<T> WithParameterName<T>(this Vouch.ExceptionAssertions<T> assertions, string paramName)
-            where T : System.ArgumentException { }
         public static System.Threading.Tasks.Task<Vouch.ExceptionAssertions<T>> WithParameterName<T>(this System.Threading.Tasks.Task<Vouch.ExceptionAssertions<T>> task, string paramName)
+            where T : System.ArgumentException { }
+        public static Vouch.ExceptionAssertions<T> WithParameterName<T>(this Vouch.ExceptionAssertions<T> assertions, string paramName)
             where T : System.ArgumentException { }
     }
     public readonly struct AsyncFunctionAssertions
@@ -49,10 +49,6 @@ namespace Vouch
             where TException : System.Exception { }
         public System.Threading.Tasks.Task<Vouch.ExceptionAssertions<TException>> ThrowAsync<TException>(string because)
             where TException : System.Exception { }
-    }
-    public sealed class VouchException : System.Exception
-    {
-        public VouchException(string message) { }
     }
     public readonly struct BooleanAssertions
     {
@@ -477,5 +473,9 @@ namespace Vouch
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> BeOneOf(params T[] validValues) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected) { }
         public Vouch.AndConstraint<Vouch.ValueAssertions<T>> NotBe(T unexpected, string because) { }
+    }
+    public sealed class VouchException : System.Exception
+    {
+        public VouchException(string message) { }
     }
 }
