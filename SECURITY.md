@@ -3,7 +3,7 @@
 ## Reporting
 
 **Please do not open a public issue.** Use
-[GitHub's private vulnerability reporting](https://github.com/BaryoDev/Aver/security/advisories/new),
+[GitHub's private vulnerability reporting](https://github.com/BaryoDev/Vouch/security/advisories/new),
 or the contact route in the [BaryoDev policy](https://github.com/BaryoDev/.github/blob/main/SECURITY.md).
 
 Expect an acknowledgement within a few days. This is a small project, so please allow reasonable
@@ -11,14 +11,14 @@ time for a fix before disclosing.
 
 ## The threat model, in one line
 
-**Aver runs inside test projects and handles the values the test gives it.** It makes no network
+**Vouch runs inside test projects and handles the values the test gives it.** It makes no network
 call, launches no process, writes no file and deserialises no types. It has no runtime
 dependencies.
 
 ## What that means in practice
 
 **Failure messages print the values under test.** If a test asserts on a secret, the secret appears
-in the failure output. Aver does not redact. Long values are cut, but cutting is for readability,
+in the failure output. Vouch does not redact. Long values are cut, but cutting is for readability,
 not for hiding data.
 
 **`BeEquivalentTo` reads members by reflection** and caches them per type. It detects cycles and

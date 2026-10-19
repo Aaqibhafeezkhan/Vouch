@@ -4,5 +4,5 @@ obj/
 .vs/
 TestResults/
 .superpowers/
-tests/Aver.ApiApproval.Tests/Aver.received.txt
+tests/Vouch.ApiApproval.Tests/Vouch.received.txt
 BenchmarkDotNet.Artifacts/

@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Aver\Aver.csproj" />
+    <ProjectReference Include="..\..\src\Vouch\Vouch.csproj" />
   </ItemGroup>
 
 </Project>

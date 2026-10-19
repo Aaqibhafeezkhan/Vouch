@@ -1,19 +1,19 @@
-# Aver
+# Vouch
 
 Fluent assertions for .NET with no dependencies. The `.Should()` surface of FluentAssertions, under MPL-2.0.
 
 ## Install
 
 ```sh
-dotnet add package Aver
+dotnet add package Vouch
 ```
 
-Targets `net8.0` and `net10.0`. No runtime dependencies. Aver references no test framework, so it works under xUnit v2, xUnit v3, NUnit and MSTest. A failed assertion throws `AverException`, and each framework shows it as a plain test failure.
+Targets `net8.0` and `net10.0`. No runtime dependencies. Vouch references no test framework, so it works under xUnit v2, xUnit v3, NUnit and MSTest. A failed assertion throws `VouchException`, and each framework shows it as a plain test failure.
 
 ## Example
 
 ```csharp
-using Aver;
+using Vouch;
 
 order.Total.Should().Be(120m);
 order.Lines.Should().HaveCount(3).And.ContainSingle(l => l.Sku == "A-1");
@@ -23,7 +23,7 @@ Func<Task> act = () => service.SaveAsync(null!);
 (await act.Should().ThrowAsync<ArgumentNullException>()).WithParameterName("order");
 ```
 
-The expression text in a failure message comes from `[CallerArgumentExpression]` at compile time. Aver never reads a stack trace or a source file.
+The expression text in a failure message comes from `[CallerArgumentExpression]` at compile time. Vouch never reads a stack trace or a source file.
 
 ## Supported assertions
 
@@ -74,10 +74,10 @@ Messages are built only when an assertion fails. A passing assertion on a value 
 
 ## Moving from FluentAssertions
 
-1. Change the package reference from `FluentAssertions` to `Aver`.
-2. Change `using FluentAssertions;` to `using Aver;`.
+1. Change the package reference from `FluentAssertions` to `Vouch`.
+2. Change `using FluentAssertions;` to `using Vouch;`.
 
-Aver shares method names and meanings with FluentAssertions 8. It does not copy any of its code, and its message text is its own.
+Vouch shares method names and meanings with FluentAssertions 8. It does not copy any of its code, and its message text is its own.
 
 Not supported:
 
@@ -88,7 +88,7 @@ Not supported:
 
 ### Reason strings
 
-Most assertions take an optional `string because`. Aver appends ` Because {reason}.` to the failure message (a period is added if missing). A null or blank reason changes nothing, and a passing assertion pays nothing.
+Most assertions take an optional `string because`. Vouch appends ` Because {reason}.` to the failure message (a period is added if missing). A null or blank reason changes nothing, and a passing assertion pays nothing.
 
 The reason overload exists on:
 
@@ -104,9 +104,9 @@ It does not exist on the date assertions, `BeApproximately`, `BeSameAs`, `NotBeS
 
 `Contain(T, because)` and `NotContain(T, because)` exist and win over the `params` form, as in FluentAssertions. On a collection of strings, `Contain("a", "b")` and `NotContain("a", "b")` read the second string as the reason, not as a second item. To check several items, pass a collection: `Contain(["a", "b"])`.
 
-### Where Aver differs on purpose
+### Where Vouch differs on purpose
 
-Aver was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAssertions 8) with a differential test project that runs edge inputs through both libraries and compares pass and fail. It was also tried on a large existing FluentAssertions test suite, switched over by changing the package and the `using`. Where Aver differs from FluentAssertions:
+Vouch was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAssertions 8) with a differential test project that runs edge inputs through both libraries and compares pass and fail. It was also tried on a large existing FluentAssertions test suite, switched over by changing the package and the `using`. Where Vouch differs from FluentAssertions:
 
 - The reason sits at the end of the message. FluentAssertions places it mid-sentence.
 - `Match<T>` on a null subject or a subject of another type fails with a message. FluentAssertions throws `NullReferenceException` or `InvalidCastException`.
@@ -122,11 +122,11 @@ Aver was checked against AwesomeAssertions (the Apache-2.0 fork of FluentAsserti
 
 ## Benchmarks
 
-`benchmarks/Aver.Benchmarks` compares Aver with FluentAssertions 8.3.0 using BenchmarkDotNet. It covers passing `int Be`, `string Be`, `HaveCount` and `Contain` on a 100 item list, `ThrowAsync<T>().WithMessage`, and `BeEquivalentTo` on one record with 6 members, a list of 100 records in reverse order, and a list of 1,000 `Row(long Id, string Name)` records in reverse order.
+`benchmarks/Vouch.Benchmarks` compares Vouch with FluentAssertions 8.3.0 using BenchmarkDotNet. It covers passing `int Be`, `string Be`, `HaveCount` and `Contain` on a 100 item list, `ThrowAsync<T>().WithMessage`, and `BeEquivalentTo` on one record with 6 members, a list of 100 records in reverse order, and a list of 1,000 `Row(long Id, string Name)` records in reverse order.
 
 Targets: 0 bytes on passing value type, string and bool assertions, and `BeEquivalentTo` at least 5 times faster and 5 times lighter on memory than FluentAssertions. Both are met on an Apple M1 with .NET 10:
 
-| | Aver | FluentAssertions |
+| | Vouch | FluentAssertions |
 |---|---:|---:|
 | Passing `int Be` | 0.58 ns, 0 B | 131.6 ns, 1,072 B |
 | Passing `string Be` | 2.83 ns, 0 B | 503.4 ns, 3,120 B |

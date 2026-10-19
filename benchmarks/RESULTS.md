@@ -1,6 +1,6 @@
 # Benchmark results
 
-Aver against FluentAssertions 8.3.0, BenchmarkDotNet 0.15.8, default job, memory diagnoser on.
+Vouch against FluentAssertions 8.3.0, BenchmarkDotNet 0.15.8, default job, memory diagnoser on.
 
 Full run on 2026-10-19. Both targets met.
 
@@ -25,7 +25,7 @@ Both met. Passing `int Be` and `string Be` allocate 0 bytes. `bool` has no bench
 
 ## Passing assertions
 
-| Assertion | Aver | FluentAssertions | Aver allocated | FluentAssertions allocated |
+| Assertion | Vouch | FluentAssertions | Vouch allocated | FluentAssertions allocated |
 |---|---:|---:|---:|---:|
 | `int Be` | 0.58 ns | 131.6 ns | 0 B | 1,072 B |
 | `string Be` | 2.83 ns | 503.4 ns | 0 B | 3,120 B |
@@ -35,7 +35,7 @@ Both met. Passing `int Be` and `string Be` allocate 0 bytes. `bool` has no bench
 
 ## BeEquivalentTo
 
-| Case | Aver | FluentAssertions | Faster | Aver allocated | FluentAssertions allocated | Less memory |
+| Case | Vouch | FluentAssertions | Faster | Vouch allocated | FluentAssertions allocated | Less memory |
 |---|---:|---:|---:|---:|---:|---:|
 | One record | 796 ns | 29.2 us | 37x | 960 B | 106,426 B | 111x |
 | 100 records, reverse order | 142.5 us | 1,085 ms | 7,617x | 89,200 B | 1,758,949,096 B | 19,719x |

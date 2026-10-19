@@ -7,8 +7,8 @@ disagree, this file wins.
 ## Getting it running
 
 ```sh
-git clone https://github.com/BaryoDev/Aver.git
-cd Aver
+git clone https://github.com/BaryoDev/Vouch.git
+cd Vouch
 dotnet test
 ```
 
@@ -23,16 +23,16 @@ passing assertion.** Method names and meanings are shared with FluentAssertions 
 Those constraints decide most design questions:
 
 - **No runtime dependencies.** A pull request that adds a `PackageReference` to
-  `src/Aver/Aver.csproj` removes the reason this library exists. If something seems to need a
+  `src/Vouch/Vouch.csproj` removes the reason this library exists. If something seems to need a
   package, open an issue first.
-- **No FluentAssertions code.** Version 8 is under a licence Aver does not use. Write from the
+- **No FluentAssertions code.** Version 8 is under a licence Vouch does not use. Write from the
   method's meaning, not from its source. AwesomeAssertions is referenced only by
-  `tests/Aver.Differential.Tests`, and FluentAssertions only by `benchmarks/Aver.Benchmarks`.
+  `tests/Vouch.Differential.Tests`, and FluentAssertions only by `benchmarks/Vouch.Benchmarks`.
 - **A passing assertion on a value type, string or bool allocates 0 bytes.** Message text,
   formatting and diffs are built only on failure.
 - **No stack trace or source file reading at run time.** The expression text comes from
   `[CallerArgumentExpression]`.
-- **No test framework reference.** A failure throws `AverException`.
+- **No test framework reference.** A failure throws `VouchException`.
 
 ## Tests
 
@@ -40,10 +40,10 @@ Those constraints decide most design questions:
 the bug, watch it fail, then fix it.
 
 **Every public method has three tests:** one that passes, one that fails, and one that pins the
-failure message. Aver's own tests use plain xUnit `Assert`, never Aver.
+failure message. Vouch's own tests use plain xUnit `Assert`, never Vouch.
 
-Rules that are easy to guess wrong go in `tests/Aver.Differential.Tests`, which runs the same input
-through Aver and AwesomeAssertions and compares pass and fail. If you change a rule on purpose,
+Rules that are easy to guess wrong go in `tests/Vouch.Differential.Tests`, which runs the same input
+through Vouch and AwesomeAssertions and compares pass and fail. If you change a rule on purpose,
 say in the pull request which way it now differs and why.
 
 The worked version of the testing rule is at
@@ -52,7 +52,7 @@ question it turns on:
 
 > Name the production change that would make this test fail.
 
-A change to the public surface fails the API approval test in `tests/Aver.ApiApproval.Tests`. If
+A change to the public surface fails the API approval test in `tests/Vouch.ApiApproval.Tests`. If
 the change is intended, update the approved file in the same pull request.
 
 CI builds with warnings as errors, checks `dotnet format --verify-no-changes`, runs `dotnet test`
@@ -66,7 +66,7 @@ phrases with no prefixes.
 
 ## Good first issues
 
-Look for [`good first issue`](https://github.com/BaryoDev/Aver/labels/good%20first%20issue). If
+Look for [`good first issue`](https://github.com/BaryoDev/Vouch/labels/good%20first%20issue). If
 nothing fits, an issue with an assertion that passed when it should have failed, or a failure
 message that was hard to read, is genuinely useful. Include the smallest code that shows it.
 

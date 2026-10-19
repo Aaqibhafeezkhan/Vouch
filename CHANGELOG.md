@@ -9,5 +9,5 @@ First release.
 - `Throw<T>`, `ThrowAsync<T>`, `NotThrow`, `NotThrowAsync`, with `WithMessage`, `WithParameterName` and `Which`.
 - `.And`, `.Which` and `.Subject` chains.
 - An optional reason string on most assertions, appended to the failure message.
-- One `AverException` type. Aver references no test framework. Failures show as plain test failures in xUnit v2, xUnit v3, NUnit and MSTest.
+- One `VouchException` type. Vouch references no test framework. Failures show as plain test failures in xUnit v2, xUnit v3, NUnit and MSTest.
 - No runtime dependencies. Targets `net8.0` and `net10.0`.

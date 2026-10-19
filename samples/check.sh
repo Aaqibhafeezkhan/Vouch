@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Runs each sample once. Every sample must fail exactly one test, Fails_on_purpose,
-# with the Aver message, and the framework must report it as a plain failure.
+# with the Vouch message, and the framework must report it as a plain failure.
 set -euo pipefail
 
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
