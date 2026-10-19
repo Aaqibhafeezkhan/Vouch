@@ -36,3 +36,6 @@ jobs:
 
       - name: Test
         run: dotnet test --configuration Release --no-build --logger "console;verbosity=normal"
+
+      - name: Check samples
+        run: bash samples/check.sh
