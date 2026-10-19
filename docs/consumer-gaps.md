@@ -10,7 +10,9 @@ The spec listed "because" arguments as a non-goal on the belief that the consume
 
 A failure message gets " Because {reason}." appended (a period is added if missing). A null or blank reason changes nothing. A passing assertion pays nothing. `becauseArgs` format arguments were not added, no call site uses them.
 
-`Contain(T, string because)` is the normal form and wins over `Contain(params T[])`, as in FluentAssertions. Other methods that take `params` (Dates, BeApproximately, BeOneOf with params) have no reason overload.
+`Contain(T, string because)` is the normal form and wins over `Contain(params T[])`, as in FluentAssertions. On a collection of strings, `Contain("a", "b")` and `NotContain("a", "b")` read the second string as the reason, not as a second item. Three call sites in the suite rely on this. The same holds in FluentAssertions. To check several items, pass a collection: `Contain(["a", "b"])`.
+
+Other methods that take `params` (Dates, BeApproximately, BeOneOf with params) have no reason overload.
 
 ## Other gaps
 

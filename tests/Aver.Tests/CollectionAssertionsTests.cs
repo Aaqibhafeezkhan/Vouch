@@ -6,7 +6,7 @@ public class CollectionAssertionsTests
 {
     private static string Message(Action act) => Assert.Throws<AverException>(act).Message;
 
-    private static readonly Row[] Rows = [new("FBS", 1), new("CREA", 2)];
+    private static readonly Row[] Rows = [new("BBB", 1), new("AAA", 2)];
 
     // resolution and single pass
 
@@ -85,7 +85,7 @@ public class CollectionAssertionsTests
 
     [Fact] public void BeEmpty_passes() => new List<int>().Should().BeEmpty();
     [Fact] public void BeEmpty_fails() => Assert.Throws<AverException>(() => new[] { 1 }.Should().BeEmpty());
-    [Fact] public void BeEmpty_message() { var xs = new[] { "FBS" }; Assert.Equal("Expected xs to be empty, but found 1 item:\n  [0] \"FBS\"", Message(() => xs.Should().BeEmpty())); }
+    [Fact] public void BeEmpty_message() { var xs = new[] { "BBB" }; Assert.Equal("Expected xs to be empty, but found 1 item:\n  [0] \"BBB\"", Message(() => xs.Should().BeEmpty())); }
     [Fact] public void BeEmpty_message_plural() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to be empty, but found 2 items:\n  [0] 1\n  [1] 2", Message(() => xs.Should().BeEmpty())); }
     [Fact] public void NotBeEmpty_passes() => new[] { 1 }.Should().NotBeEmpty();
     [Fact] public void NotBeEmpty_fails() => Assert.Throws<AverException>(() => new int[0].Should().NotBeEmpty());
@@ -122,7 +122,7 @@ public class CollectionAssertionsTests
 
     [Fact] public void Contain_item_passes() => new[] { 1, 2 }.Should().Contain(2);
     [Fact] public void Contain_item_fails() => Assert.Throws<AverException>(() => new[] { 1 }.Should().Contain(2));
-    [Fact] public void Contain_item_message() { var xs = new[] { "A", "B" }; Assert.Equal("Expected xs to contain \"FBS\", but it did not. It has:\n  [0] \"A\"\n  [1] \"B\"", Message(() => xs.Should().Contain("FBS"))); }
+    [Fact] public void Contain_item_message() { var xs = new[] { "A", "B" }; Assert.Equal("Expected xs to contain \"BBB\", but it did not. It has:\n  [0] \"A\"\n  [1] \"B\"", Message(() => xs.Should().Contain("BBB"))); }
     [Fact] public void Contain_item_Which_is_the_item() => Assert.Equal(2, new[] { 1, 2 }.Should().Contain(2).Which);
     [Fact] public void Contain_item_allows_null_item() => new string?[] { "a", null }.Should().Contain((string?)null);
     [Fact] public void Contain_items_passes() => new[] { 1, 2, 3 }.Should().Contain(new List<int> { 1, 3 });
@@ -134,7 +134,7 @@ public class CollectionAssertionsTests
     [Fact] public void Contain_predicate_passes() => new[] { 1, 2 }.Should().Contain(x => x > 1);
     [Fact] public void Contain_predicate_fails() => Assert.Throws<AverException>(() => new[] { 1 }.Should().Contain(x => x > 1));
     [Fact] public void Contain_predicate_message() { var xs = new[] { 1 }; Assert.Equal("Expected xs to contain an item matching (x > 1), but it did not. It has:\n  [0] 1", Message(() => xs.Should().Contain(x => x > 1))); }
-    [Fact] public void Contain_predicate_Which_is_first_match() => Assert.Equal(new Row("CREA", 2), Rows.Should().Contain(r => r.Qty > 1).Which);
+    [Fact] public void Contain_predicate_Which_is_first_match() => Assert.Equal(new Row("AAA", 2), Rows.Should().Contain(r => r.Qty > 1).Which);
 
     // NotContain
 
@@ -154,12 +154,12 @@ public class CollectionAssertionsTests
     [Fact] public void ContainSingle_fails() => Assert.Throws<AverException>(() => new[] { 1, 2 }.Should().ContainSingle());
     [Fact] public void ContainSingle_message() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to contain a single item, but found 2:\n  [0] 1\n  [1] 2", Message(() => xs.Should().ContainSingle())); }
     [Fact] public void ContainSingle_message_on_empty() { var xs = new int[0]; Assert.Equal("Expected xs to contain a single item, but found 0.", Message(() => xs.Should().ContainSingle())); }
-    [Fact] public void ContainSingle_Which_is_the_item() => Assert.Equal("FBS", new[] { new Row("FBS", 1) }.Should().ContainSingle().Which.Code);
+    [Fact] public void ContainSingle_Which_is_the_item() => Assert.Equal("BBB", new[] { new Row("BBB", 1) }.Should().ContainSingle().Which.Code);
     [Fact] public void ContainSingle_Subject_is_the_item() => Assert.Equal(1, new[] { 1 }.Should().ContainSingle().Subject);
-    [Fact] public void ContainSingle_predicate_passes() => Assert.Equal("CREA", Rows.Should().ContainSingle(r => r.Qty == 2).Which.Code);
+    [Fact] public void ContainSingle_predicate_passes() => Assert.Equal("AAA", Rows.Should().ContainSingle(r => r.Qty == 2).Which.Code);
     [Fact] public void ContainSingle_predicate_fails_on_two() => Assert.Throws<AverException>(() => new[] { 1, 1 }.Should().ContainSingle(x => x == 1));
     [Fact] public void ContainSingle_predicate_fails_on_none() => Assert.Throws<AverException>(() => new[] { 1 }.Should().ContainSingle(x => x == 2));
-    [Fact] public void ContainSingle_predicate_message() { var xs = new[] { new Row("FBS", 1), new Row("CREA", 2), new Row("FBS", 3) }; Assert.Equal("Expected xs to contain a single item matching (x.Code == \"FBS\"), but found 2:\n  [0] Row { Code = \"FBS\", Qty = 1 }\n  [2] Row { Code = \"FBS\", Qty = 3 }", Message(() => xs.Should().ContainSingle(x => x.Code == "FBS"))); }
+    [Fact] public void ContainSingle_predicate_message() { var xs = new[] { new Row("BBB", 1), new Row("AAA", 2), new Row("BBB", 3) }; Assert.Equal("Expected xs to contain a single item matching (x.Code == \"BBB\"), but found 2:\n  [0] Row { Code = \"BBB\", Qty = 1 }\n  [2] Row { Code = \"BBB\", Qty = 3 }", Message(() => xs.Should().ContainSingle(x => x.Code == "BBB"))); }
     [Fact] public void ContainSingle_predicate_message_on_none() { var xs = new[] { 1 }; Assert.Equal("Expected xs to contain a single item matching (x == 2), but found 0. It has:\n  [0] 1", Message(() => xs.Should().ContainSingle(x => x == 2))); }
 
     // OnlyContain
@@ -173,7 +173,7 @@ public class CollectionAssertionsTests
     [Fact] public void Equal_passes() => new[] { 1, 2 }.Should().Equal(new List<int> { 1, 2 });
     [Fact] public void Equal_params_form() => new List<string> { "a", "b" }.Should().Equal("a", "b");
     [Fact] public void Equal_is_ordered() => Assert.Throws<AverException>(() => new[] { 2, 1 }.Should().Equal(1, 2));
-    [Fact] public void Equal_message_differs_at_index() { var xs = new[] { "FBS", "LDL", "HBA1C" }; Assert.Equal("Expected xs to equal the expected items, but they differ at index 2: expected \"CREA\", found \"HBA1C\".", Message(() => xs.Should().Equal("FBS", "LDL", "CREA"))); }
+    [Fact] public void Equal_message_differs_at_index() { var xs = new[] { "BBB", "CCC", "DDD" }; Assert.Equal("Expected xs to equal the expected items, but they differ at index 2: expected \"AAA\", found \"DDD\".", Message(() => xs.Should().Equal("BBB", "CCC", "AAA"))); }
     [Fact] public void Equal_message_subject_longer() { var xs = new[] { 1, 2, 9, 4 }; Assert.Equal("Expected xs to equal the expected items, but it has 4 items, expected 3.\n  They differ at index 2: expected 3, found 9.", Message(() => xs.Should().Equal(1, 2, 3))); }
     [Fact] public void Equal_message_subject_shorter_prefix_matches() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to equal the expected items, but it has 2 items, expected 3.\n  They differ at index 2: expected 3, found nothing.", Message(() => xs.Should().Equal(1, 2, 3))); }
     [Fact] public void Equal_message_subject_longer_prefix_matches() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to equal the expected items, but it has 3 items, expected 2.\n  They differ at index 2: expected nothing, found 3.", Message(() => xs.Should().Equal(1, 2))); }
@@ -186,7 +186,7 @@ public class CollectionAssertionsTests
 
     [Fact] public void OnlyHaveUniqueItems_passes() => new[] { 1, 2 }.Should().OnlyHaveUniqueItems();
     [Fact] public void OnlyHaveUniqueItems_fails() => Assert.Throws<AverException>(() => new[] { 1, 1 }.Should().OnlyHaveUniqueItems());
-    [Fact] public void OnlyHaveUniqueItems_message() { var xs = new[] { "FBS", "LDL", "FBS" }; Assert.Equal("Expected xs to have unique items, but \"FBS\" appears 2 times.", Message(() => xs.Should().OnlyHaveUniqueItems())); }
+    [Fact] public void OnlyHaveUniqueItems_message() { var xs = new[] { "BBB", "CCC", "BBB" }; Assert.Equal("Expected xs to have unique items, but \"BBB\" appears 2 times.", Message(() => xs.Should().OnlyHaveUniqueItems())); }
     [Fact] public void OnlyHaveUniqueItems_handles_null_items() { Assert.Throws<AverException>(() => new string?[] { null, null }.Should().OnlyHaveUniqueItems()); new string?[] { null, "a" }.Should().OnlyHaveUniqueItems(); }
 
     // ordering
@@ -196,13 +196,13 @@ public class CollectionAssertionsTests
     [Fact] public void BeInAscendingOrder_message() { var xs = new[] { 1, 3, 7, 5 }; Assert.Equal("Expected xs to be in ascending order, but [3] 5 comes after [2] 7.", Message(() => xs.Should().BeInAscendingOrder())); }
     [Fact] public void BeInAscendingOrder_key_passes() => Rows.Should().BeInAscendingOrder(r => r.Qty);
     [Fact] public void BeInAscendingOrder_key_fails() => Assert.Throws<AverException>(() => Rows.Should().BeInAscendingOrder(r => r.Code));
-    [Fact] public void BeInAscendingOrder_key_message() { Assert.Equal("Expected Rows to be in ascending order, but [1] Row { Code = \"CREA\", Qty = 2 } comes after [0] Row { Code = \"FBS\", Qty = 1 }.", Message(() => Rows.Should().BeInAscendingOrder(r => r.Code))); }
+    [Fact] public void BeInAscendingOrder_key_message() { Assert.Equal("Expected Rows to be in ascending order, but [1] Row { Code = \"AAA\", Qty = 2 } comes after [0] Row { Code = \"BBB\", Qty = 1 }.", Message(() => Rows.Should().BeInAscendingOrder(r => r.Code))); }
     [Fact] public void BeInDescendingOrder_passes() => new[] { 3, 2, 2, 1 }.Should().BeInDescendingOrder();
     [Fact] public void BeInDescendingOrder_fails() => Assert.Throws<AverException>(() => new[] { 1, 2 }.Should().BeInDescendingOrder());
     [Fact] public void BeInDescendingOrder_message() { var xs = new[] { 9, 7, 8 }; Assert.Equal("Expected xs to be in descending order, but [2] 8 comes after [1] 7.", Message(() => xs.Should().BeInDescendingOrder())); }
     [Fact] public void BeInDescendingOrder_key_passes() => Rows.Should().BeInDescendingOrder(r => r.Code);
     [Fact] public void BeInDescendingOrder_key_fails() => Assert.Throws<AverException>(() => Rows.Should().BeInDescendingOrder(r => r.Qty));
-    [Fact] public void BeInDescendingOrder_key_message() { Assert.Equal("Expected Rows to be in descending order, but [1] Row { Code = \"CREA\", Qty = 2 } comes after [0] Row { Code = \"FBS\", Qty = 1 }.", Message(() => Rows.Should().BeInDescendingOrder(r => r.Qty))); }
+    [Fact] public void BeInDescendingOrder_key_message() { Assert.Equal("Expected Rows to be in descending order, but [1] Row { Code = \"AAA\", Qty = 2 } comes after [0] Row { Code = \"BBB\", Qty = 1 }.", Message(() => Rows.Should().BeInDescendingOrder(r => r.Qty))); }
     [Fact] public void Ordering_passes_on_empty_and_single() { new int[0].Should().BeInAscendingOrder(); new[] { 1 }.Should().BeInDescendingOrder(); }
 
     // AllSatisfy

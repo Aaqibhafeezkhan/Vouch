@@ -52,7 +52,7 @@ public class FormatterTests
     [Fact] public void Empty_list() => Assert.Equal("[]", Formatter.Format(new List<int>()));
     [Fact] public void Dictionary_shows_pairs() => Assert.Equal("{[\"a\"] = 1, [\"b\"] = 2}", Formatter.Format(new Dictionary<string, int> { ["a"] = 1, ["b"] = 2 }));
     [Fact] public void ToString_override_is_used() => Assert.Equal("named!", Formatter.Format(new Named()));
-    [Fact] public void Record_shows_members() => Assert.Equal("Row { Code = \"FBS\", Qty = 2 }", Formatter.Format(new Row("FBS", 2)));
+    [Fact] public void Record_shows_members() => Assert.Equal("Row { Code = \"BBB\", Qty = 2 }", Formatter.Format(new Row("BBB", 2)));
     [Fact] public void Record_struct_shows_members() => Assert.Equal("Tick { N = 3 }", Formatter.Format(new Tick(3)));
     [Fact] public void Anonymous_shows_members() => Assert.Equal("{ Id = 1 }", Formatter.Format(new { Id = 1 }));
     [Fact] public void List_is_cut_after_ten() => Assert.Equal("[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, ... (5 more)]", Formatter.Format(Enumerable.Range(0, 15).ToList()));

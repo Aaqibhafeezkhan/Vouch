@@ -308,4 +308,15 @@ public class ReasonTests
         Pins(() => fine.Should().Throw<InvalidOperationException>(), () => fine.Should().Throw<InvalidOperationException>(R));
         Pins(() => boom.Should().NotThrow(), () => boom.Should().NotThrow(R));
     }
+
+    [Fact]
+    public void A_second_string_on_a_string_collection_is_read_as_the_reason()
+    {
+        var xs = new List<string> { "a" };
+        xs.Should().Contain("a", "b");
+        xs.Should().NotContain("z", "b");
+        var ex = Assert.Throws<AverException>(() => xs.Should().Contain("z", "b"));
+        Assert.EndsWith("Because b.", ex.Message);
+        Assert.Throws<AverException>(() => xs.Should().Contain(new[] { "a", "b" }));
+    }
 }

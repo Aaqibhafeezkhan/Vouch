@@ -795,6 +795,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    /// <remarks>
+    /// On a collection of strings, a second string argument is read as the reason, not as another expected item (same as FluentAssertions). Use <c>Contain(["a", "b"])</c> to check several items.
+    /// </remarks>
     public AndWhichConstraint<TSelf, T> Contain(T expected, string because)
     {
         try
@@ -831,6 +834,9 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         }
     }
 
+    /// <remarks>
+    /// On a collection of strings, a second string argument is read as the reason, not as another expected item (same as FluentAssertions). Use <c>Contain(["a", "b"])</c> to check several items.
+    /// </remarks>
     public AndConstraint<TSelf> NotContain(T unexpected, string because)
     {
         try

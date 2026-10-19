@@ -165,9 +165,9 @@ public class StringAssertionsTests
         Assert.False(text.EndsWith("..", StringComparison.Ordinal));
     }
 
-    [Fact] public void NotContainEquivalentOf_passes_when_absent() { var s = "Authorization: token"; s.Should().NotContainEquivalentOf("bearer "); }
-    [Fact] public void NotContainEquivalentOf_ignores_case() { var s = "Authorization: BEARER abc"; Assert.Throws<AverException>(() => s.Should().NotContainEquivalentOf("bearer ")); }
-    [Fact] public void NotContainEquivalentOf_message() { var s = "an API_KEY here"; Assert.Equal("Expected s not to contain \"api_key\" (ignoring case), but found \"an API_KEY here\".", Message(() => s.Should().NotContainEquivalentOf("api_key"))); }
+    [Fact] public void NotContainEquivalentOf_passes_when_absent() { var s = "Header: value"; s.Should().NotContainEquivalentOf("token "); }
+    [Fact] public void NotContainEquivalentOf_ignores_case() { var s = "Header: TOKEN abc"; Assert.Throws<AverException>(() => s.Should().NotContainEquivalentOf("token ")); }
+    [Fact] public void NotContainEquivalentOf_message() { var s = "a PASSWORD here"; Assert.Equal("Expected s not to contain \"password\" (ignoring case), but found \"a PASSWORD here\".", Message(() => s.Should().NotContainEquivalentOf("password"))); }
     [Fact] public void NotContainEquivalentOf_fails_on_null() { string? s = null; Assert.Equal("Expected s not to contain \"x\" (ignoring case), but found null.", Message(() => s.Should().NotContainEquivalentOf("x"))); }
     [Fact] public void NotContainEquivalentOf_null_argument_throws_ArgumentNullException() { var s = "a"; Assert.Throws<ArgumentNullException>(() => s.Should().NotContainEquivalentOf(null!)); }
     [Fact] public void NotContainEquivalentOf_takes_a_reason() { var s = "abc"; Assert.Equal("Expected s not to contain \"B\" (ignoring case), but found \"abc\". Because it must not.", Message(() => s.Should().NotContainEquivalentOf("B", "it must not"))); }

@@ -6,7 +6,7 @@ namespace Aver.Tests;
 
 public class EquivalencyTests
 {
-    public record LabPackage(string Name, string[] Tests);
+    public record Bundle(string Name, string[] Tests);
 
     public record struct Point(int X, int Y);
 
@@ -65,9 +65,9 @@ public class EquivalencyTests
     [Fact]
     public void Records_compare_by_members_and_list_paths()
     {
-        var package = new LabPackage("Diabetes", new[] { "FBS", "HBA1C" });
-        var msg = Message(() => package.Should().BeEquivalentTo(new LabPackage("Diabetes basic", new[] { "FBS", "CREA" })));
-        Assert.Equal("Expected package to be equivalent to the expected LabPackage, but:\n  Name was \"Diabetes\", expected \"Diabetes basic\".\n  Tests[1] expected \"CREA\" was not found.", msg);
+        var package = new Bundle("Alpha", new[] { "BBB", "DDD" });
+        var msg = Message(() => package.Should().BeEquivalentTo(new Bundle("Alpha basic", new[] { "BBB", "AAA" })));
+        Assert.Equal("Expected package to be equivalent to the expected Bundle, but:\n  Name was \"Alpha\", expected \"Alpha basic\".\n  Tests[1] expected \"AAA\" was not found.", msg);
     }
 
     [Fact] public void Anonymous_expectation_against_class() => new EqPerson { Id = 1, Name = "A", Extra = 9 }.Should().BeEquivalentTo(new { Id = 1, Name = "A" });
@@ -225,7 +225,7 @@ public class EquivalencyTests
 
     [Fact] public void Record_struct_compares_by_members() { new Point(1, 2).Should().BeEquivalentTo(new Point(1, 2)); Assert.Contains("Y was 2, expected 3.", Message(() => new Point(1, 2).Should().BeEquivalentTo(new Point(1, 3)))); }
 
-    [Fact] public void Record_array_member_is_compared_by_content_not_reference() => new LabPackage("A", new[] { "x" }).Should().BeEquivalentTo(new LabPackage("A", new[] { "x" }));
+    [Fact] public void Record_array_member_is_compared_by_content_not_reference() => new Bundle("A", new[] { "x" }).Should().BeEquivalentTo(new Bundle("A", new[] { "x" }));
 
     [Fact] public void Anonymous_types_compare_by_members() { new { A = 1, B = "x" }.Should().BeEquivalentTo(new { A = 1, B = "x" }); Assert.Contains("B was \"x\", expected \"y\".", Message(() => new { A = 1, B = "x" }.Should().BeEquivalentTo(new { A = 1, B = "y" }))); }
 

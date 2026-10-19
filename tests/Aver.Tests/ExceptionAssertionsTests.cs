@@ -162,8 +162,8 @@ public class ExceptionAssertionsTests
     [Fact]
     public void WithMessage_fails_with_exact_message()
     {
-        Action act = () => throw new InvalidOperationException("Branch code is missing.");
-        Assert.Equal("Expected act's exception message to match \"Name * required.\", but found \"Branch code is missing.\".",
+        Action act = () => throw new InvalidOperationException("Value is missing.");
+        Assert.Equal("Expected act's exception message to match \"Name * required.\", but found \"Value is missing.\".",
             Msg(() => act.Should().Throw<InvalidOperationException>().WithMessage("Name * required.")));
     }
 
@@ -199,8 +199,8 @@ public class ExceptionAssertionsTests
     [Fact]
     public async Task WithMessage_on_the_task_fails_with_exact_message()
     {
-        Func<Task> act = () => Task.FromException(new InvalidOperationException("Branch code is missing."));
-        Assert.Equal("Expected act's exception message to match \"Name * required.\", but found \"Branch code is missing.\".",
+        Func<Task> act = () => Task.FromException(new InvalidOperationException("Value is missing."));
+        Assert.Equal("Expected act's exception message to match \"Name * required.\", but found \"Value is missing.\".",
             await MsgAsync(() => act.Should().ThrowAsync<InvalidOperationException>().WithMessage("Name * required.")));
     }
 
