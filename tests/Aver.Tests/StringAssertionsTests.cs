@@ -162,5 +162,6 @@ public class StringAssertionsTests
         var text = Message(() => s.Should().MatchRegex("("));
         Assert.StartsWith("Expected s to match regex \"(\", but the pattern is not a valid regular expression: ", text);
         Assert.EndsWith(".", text);
+        Assert.False(text.EndsWith("..", StringComparison.Ordinal));
     }
 }

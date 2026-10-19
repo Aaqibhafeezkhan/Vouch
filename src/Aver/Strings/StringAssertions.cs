@@ -209,7 +209,7 @@ public readonly struct StringAssertions
             }
             catch (ArgumentException ex)
             {
-                Fail.With($"Expected {Name} to match regex {Formatter.Format(pattern)}, but the pattern is not a valid regular expression: {ex.Message}.");
+                Fail.With($"Expected {Name} to match regex {Formatter.Format(pattern)}, but the pattern is not a valid regular expression: {ex.Message.TrimEnd('.')}.");
             }
         }
 
