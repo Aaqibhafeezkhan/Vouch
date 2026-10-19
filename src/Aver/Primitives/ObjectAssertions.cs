@@ -80,7 +80,12 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> NotBeOfType<T>()
     {
-        if (Subject is not null && Subject.GetType() == typeof(T))
+        if (Subject is null)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be of type {Formatter.Format(typeof(T))}, but found null.");
+        }
+
+        if (Subject.GetType() == typeof(T))
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be of type {Formatter.Format(typeof(T))}, but it was.");
         }
@@ -90,6 +95,11 @@ public readonly struct ObjectAssertions
 
     public AndConstraint<ObjectAssertions> NotBeAssignableTo<T>()
     {
+        if (Subject is null)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} not to be assignable to {Formatter.Format(typeof(T))}, but found null.");
+        }
+
         if (Subject is T)
         {
             Fail.With($"Expected {Fail.Name(_expression)} not to be assignable to {Formatter.Format(typeof(T))}, but {Formatter.Format(Subject.GetType())} is.");

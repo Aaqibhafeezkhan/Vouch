@@ -50,7 +50,21 @@ public class TypeAssertionsTests
         Assert.Equal("Expected p to be assignable to IEntity, but found null.", Assert.Throws<AverException>(() => p.Should().BeAssignableTo<IEntity>()).Message);
     }
 
-    [Fact] public void NotBeOfType_passes_on_other_type_and_null() { object p = new Child(); p.Should().NotBeOfType<Parent>(); object? n = null; n.Should().NotBeOfType<Parent>(); }
+    [Fact] public void NotBeOfType_passes_on_other_type() { object p = new Child(); p.Should().NotBeOfType<Parent>(); }
+
+    [Fact]
+    public void NotBeOfType_fails_on_null_with_exact_message()
+    {
+        object? p = null;
+        Assert.Equal("Expected p not to be of type Person, but found null.", Assert.Throws<AverException>(() => p.Should().NotBeOfType<Person>()).Message);
+    }
+
+    [Fact]
+    public void NotBeAssignableTo_fails_on_null_with_exact_message()
+    {
+        object? p = null;
+        Assert.Equal("Expected p not to be assignable to IEntity, but found null.", Assert.Throws<AverException>(() => p.Should().NotBeAssignableTo<IEntity>()).Message);
+    }
 
     [Fact]
     public void NotBeOfType_fails_with_exact_message()
