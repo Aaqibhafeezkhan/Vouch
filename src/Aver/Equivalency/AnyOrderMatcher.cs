@@ -10,6 +10,8 @@ internal sealed class AnyOrderMatcher
     private readonly object?[] _subject;
     private readonly bool[] _used;
     private HashIndex? _scalars;
+    private HashIndex? _sequences;
+    private bool _cheap;
     private Dictionary<Type, HashIndex?>? _byType;
     private int _firstUnused;
 
@@ -26,6 +28,7 @@ internal sealed class AnyOrderMatcher
         for (var i = 0; i < expected.Length && !run.Stop; i++)
         {
             var item = expected[i];
+            matcher._cheap = run.CapReached;
             var match = i < subject.Length && !matcher._used[i] && run.Probe(subject[i], item, i)
                 ? i
                 : matcher.Find(item, i);
@@ -37,6 +40,40 @@ internal sealed class AnyOrderMatcher
             {
                 matcher._used[match] = true;
             }
+        }
+    }
+
+    private static bool TrySequenceHash(Comparison run, object? item, out int hash)
+    {
+        hash = 0;
+        if (item is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (MemberCache.ShapeOf(item.GetType()).Kind != TypeKind.Sequence)
+            {
+                return false;
+            }
+
+            var elements = run.Elements(item);
+            var sum = 0;
+            foreach (var element in elements)
+            {
+                if (element is not null && MemberCache.IsScalarType(element.GetType()))
+                {
+                    sum = unchecked(sum + ScalarHash(element));
+                }
+            }
+
+            hash = HashCode.Combine(elements.Length, sum);
+            return true;
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            return false;
         }
     }
 
@@ -102,11 +139,31 @@ internal sealed class AnyOrderMatcher
         var hash = 0;
         if (item is not null && _subject.Length >= IndexThreshold)
         {
-            var shape = MemberCache.ShapeOf(item.GetType());
-            if (shape.Kind == TypeKind.Scalar)
+            TypeShape? shape = null;
+            try
+            {
+                shape = MemberCache.ShapeOf(item.GetType());
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException)
+            {
+            }
+
+            if (shape is null)
+            {
+                return _cheap ? -1 : Scan(item, index);
+            }
+
+            if (shape.Kind == TypeKind.Sequence)
+            {
+                if (TrySequenceHash(_run, item, out hash))
+                {
+                    hashIndex = _sequences ??= HashIndex.Build(_run, _subject, null, sequences: true);
+                }
+            }
+            else if (shape.Kind == TypeKind.Scalar)
             {
                 hash = ScalarHash(item);
-                hashIndex = _scalars ??= HashIndex.Build(_subject, null);
+                hashIndex = _scalars ??= HashIndex.Build(_run, _subject, null, sequences: false);
             }
             else if (shape.Kind == TypeKind.Members && shape.Members.Length > 0 && TryHash(item, shape.Members, out hash))
             {
@@ -114,7 +171,7 @@ internal sealed class AnyOrderMatcher
                 var type = item.GetType();
                 if (!_byType.TryGetValue(type, out hashIndex))
                 {
-                    hashIndex = HashIndex.Build(_subject, shape.Members);
+                    hashIndex = HashIndex.Build(_run, _subject, shape.Members, sequences: false);
                     _byType[type] = hashIndex;
                 }
             }
@@ -122,7 +179,7 @@ internal sealed class AnyOrderMatcher
 
         if (hashIndex is null)
         {
-            return Scan(item, index);
+            return _cheap && _subject.Length >= IndexThreshold ? -1 : Scan(item, index);
         }
 
         if (hashIndex.Buckets.TryGetValue(hash, out var bucket))
@@ -134,7 +191,7 @@ internal sealed class AnyOrderMatcher
             }
         }
 
-        return Walk(ref hashIndex.WildcardHead, hashIndex.Next, item, index);
+        return _cheap ? -1 : Walk(ref hashIndex.WildcardHead, hashIndex.Next, item, index);
     }
 
     private int Walk(ref int head, int[] next, object? item, int index)
@@ -196,14 +253,15 @@ internal sealed class AnyOrderMatcher
         public int[] Next = [];
         public int WildcardHead = -1;
 
-        public static HashIndex Build(object?[] subject, MemberGetter[]? keys)
+        public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences)
         {
             var index = new HashIndex { Next = new int[subject.Length], Heads = new int[subject.Length] };
             var buckets = 0;
             for (var j = subject.Length - 1; j >= 0; j--)
             {
                 int hash;
-                var hashed = keys is null ? TryHashScalar(subject[j], out hash) : TryHash(subject[j], keys, out hash);
+                var hashed = sequences ? TrySequenceHash(run, subject[j], out hash)
+                    : keys is null ? TryHashScalar(subject[j], out hash) : TryHash(subject[j], keys, out hash);
                 if (!hashed)
                 {
                     index.Next[j] = index.WildcardHead;

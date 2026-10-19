@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace Aver;
@@ -8,29 +9,64 @@ internal static class Equivalency
 {
     internal const int MaxDepth = 10;
     internal const int MaxListed = 10;
-
-    public static int Compare(object? subject, object? expectation, EquivalencyOptions options, List<Difference> differences, int maxListed = int.MaxValue)
-    {
-        var run = new Comparison(options, differences, maxListed, stopOnFirst: false);
-        run.CompareValues(subject, expectation);
-        return run.Total;
-    }
+    internal const int MaxItems = 1_000_000;
 
     public static bool AreEquivalent(object? subject, object? expectation, EquivalencyOptions options)
     {
-        var run = new Comparison(options, null, 0, stopOnFirst: true);
+        var run = new Comparison(options, collect: false, 0, stopOnFirst: true);
         run.CompareValues(subject, expectation);
         return run.Total == 0;
     }
 
+    public static void Require<TSubject, TExpectation>(TSubject subject, TExpectation expectation, Type expectedType, EquivalencyOptions options, string name)
+    {
+        if (typeof(TSubject) == typeof(TExpectation)
+            && ScalarType<TSubject>.Is
+            && EqualityComparer<TSubject>.Default.Equals(subject, Unsafe.As<TExpectation, TSubject>(ref expectation)))
+        {
+            return;
+        }
+
+        Require((object?)subject, (object?)expectation, expectedType, options, name);
+    }
+
     public static void Require(object? subject, object? expectation, Type expectedType, EquivalencyOptions options, string name)
     {
-        var differences = new List<Difference>();
-        var total = Compare(subject, expectation, options, differences, MaxListed);
-        if (total > 0)
+        if (subject is not null
+            && expectation is not null
+            && MemberCache.ShapeOf(expectation.GetType()).Kind == TypeKind.Scalar
+            && Comparison.ScalarEquals(subject, expectation))
         {
-            Fail.With(Message(name, expectation?.GetType() ?? expectedType, differences, total));
+            return;
         }
+
+        var run = new Comparison(options, collect: true, MaxListed, stopOnFirst: false);
+        run.CompareValues(subject, expectation);
+        if (run.Total > 0)
+        {
+            Fail.With(Message(name, expectation?.GetType() ?? expectedType, run.Differences, run.Total));
+        }
+    }
+
+    internal static object?[] Snapshot(IEnumerable sequence)
+    {
+        var items = new List<object?>();
+        foreach (var item in sequence)
+        {
+            if (items.Count == MaxItems)
+            {
+                throw new TooManyItemsException();
+            }
+
+            items.Add(item);
+        }
+
+        return items.ToArray();
+    }
+
+    private static class ScalarType<T>
+    {
+        public static readonly bool Is = MemberCache.IsScalarType(typeof(T));
     }
 
     public static bool IsCollection(Type type) =>
@@ -75,11 +111,16 @@ internal static class Equivalency
 
         if (total > differences.Count)
         {
-            sb.Append("\n  ... and ").Append(total - differences.Count).Append(" more differences");
+            var more = total - differences.Count;
+            sb.Append("\n  ... and ").Append(more).Append(more == 1 ? " more difference" : " more differences");
         }
 
         return sb.ToString();
     }
+}
+
+internal sealed class TooManyItemsException : Exception
+{
 }
 
 internal sealed class Comparison
@@ -102,6 +143,8 @@ internal sealed class Comparison
         Cycle,
         Depth,
         Threw,
+        TooMany,
+        NoMembers,
     }
 
     private struct Step
@@ -112,21 +155,76 @@ internal sealed class Comparison
         public object? Key;
     }
 
-    private readonly List<Difference>? _differences;
+    private static readonly List<Difference> NoDifferences = new();
+
+    private readonly bool _collect;
     private readonly int _maxListed;
+    private List<Difference>? _differences;
+    private Dictionary<object, object?[]>? _arrays;
+    private Dictionary<object, DictionaryView>? _views;
     private readonly List<Step> _path = new();
     private readonly List<object> _pairs = new();
 
     private bool _quiet;
     private bool _stopOnFirst;
 
-    public Comparison(EquivalencyOptions options, List<Difference>? differences, int maxListed, bool stopOnFirst)
+    public Comparison(EquivalencyOptions options, bool collect, int maxListed, bool stopOnFirst)
     {
         Options = options;
-        _differences = differences;
+        _collect = collect;
         _maxListed = maxListed;
         _stopOnFirst = stopOnFirst;
-        _quiet = differences is null;
+        _quiet = !collect;
+    }
+
+    public List<Difference> Differences => _differences ?? NoDifferences;
+
+    public bool CapReached => !_quiet && _differences is not null && _differences.Count >= _maxListed;
+
+    public object?[] Elements(object sequence)
+    {
+        if (sequence is object?[] direct)
+        {
+            return direct;
+        }
+
+        if (sequence is ICollection collection)
+        {
+            if (collection.Count > Equivalency.MaxItems)
+            {
+                throw new TooManyItemsException();
+            }
+
+            var copy = new object?[collection.Count];
+            collection.CopyTo(copy, 0);
+            return copy;
+        }
+
+        _arrays ??= new Dictionary<object, object?[]>(ReferenceEqualityComparer.Instance);
+        if (!_arrays.TryGetValue(sequence, out var items))
+        {
+            items = Equivalency.Snapshot((IEnumerable)sequence);
+            _arrays[sequence] = items;
+        }
+
+        return items;
+    }
+
+    private DictionaryView View(object dictionary)
+    {
+        if (dictionary is IDictionary)
+        {
+            return DictionaryView.Of(dictionary);
+        }
+
+        _views ??= new Dictionary<object, DictionaryView>(ReferenceEqualityComparer.Instance);
+        if (!_views.TryGetValue(dictionary, out var view))
+        {
+            view = DictionaryView.Of(dictionary);
+            _views[dictionary] = view;
+        }
+
+        return view;
     }
 
     public EquivalencyOptions Options { get; }
@@ -158,28 +256,35 @@ internal sealed class Comparison
             return;
         }
 
-        var shape = MemberCache.ShapeOf(expectation.GetType());
-        switch (shape.Kind)
+        try
         {
-            case TypeKind.Scalar:
-                if (!ScalarEquals(subject, expectation))
-                {
-                    Add(Kind.Mismatch, subject, expectation);
-                }
+            var shape = MemberCache.ShapeOf(expectation.GetType());
+            switch (shape.Kind)
+            {
+                case TypeKind.Scalar:
+                    if (!ScalarEquals(subject, expectation))
+                    {
+                        Add(Kind.Mismatch, subject, expectation);
+                    }
 
-                return;
-            case TypeKind.Equatable:
-                CompareEquatable(subject, expectation);
-                return;
-            default:
-                if (!Compatible(subject, shape.Kind))
-                {
-                    Add(Kind.Mismatch, subject, expectation);
                     return;
-                }
+                case TypeKind.Equatable:
+                    CompareEquatable(subject, expectation);
+                    return;
+                default:
+                    if (!Compatible(subject, shape.Kind))
+                    {
+                        Add(Kind.Mismatch, subject, expectation);
+                        return;
+                    }
 
-                CompareStructure(subject, expectation, shape);
-                return;
+                    CompareStructure(subject, expectation, shape);
+                    return;
+            }
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            AddThrew(ex);
         }
     }
 
@@ -272,6 +377,11 @@ internal sealed class Comparison
                     break;
             }
         }
+        catch (TooManyItemsException)
+        {
+            Restore(pathCount, pairCount);
+            Add(Kind.TooMany, null, null);
+        }
         catch (Exception ex) when (ex is not OutOfMemoryException)
         {
             Restore(pathCount, pairCount);
@@ -290,6 +400,12 @@ internal sealed class Comparison
     {
         var subjectShape = MemberCache.ShapeOf(subject.GetType());
         var members = shape.Members;
+        if (members.Length == 0)
+        {
+            Add(Kind.NoMembers, null, null);
+            return;
+        }
+
         for (var i = 0; i < members.Length && !Stop; i++)
         {
             var member = members[i];
@@ -319,8 +435,8 @@ internal sealed class Comparison
 
     private void CompareSequences(object subject, object expectation)
     {
-        var actual = ToArray(subject);
-        var expected = ToArray(expectation);
+        var actual = Elements(subject);
+        var expected = Elements(expectation);
         if (actual.Length != expected.Length)
         {
             Add(Kind.Count, actual.Length, expected.Length);
@@ -345,8 +461,8 @@ internal sealed class Comparison
 
     private void CompareDictionaries(object subject, object expectation)
     {
-        var actual = DictionaryView.Of(subject);
-        var expected = DictionaryView.Of(expectation);
+        var actual = View(subject);
+        var expected = View(expectation);
         var missing = false;
         foreach (var entry in expected.Entries())
         {
@@ -385,7 +501,7 @@ internal sealed class Comparison
         }
     }
 
-    private static bool ScalarEquals(object subject, object expectation)
+    internal static bool ScalarEquals(object subject, object expectation)
     {
         if (subject.Equals(expectation))
         {
@@ -398,29 +514,6 @@ internal sealed class Comparison
         }
 
         return false;
-    }
-
-    private static object?[] ToArray(object sequence)
-    {
-        if (sequence is object?[] direct)
-        {
-            return direct;
-        }
-
-        if (sequence is ICollection collection)
-        {
-            var copy = new object?[collection.Count];
-            collection.CopyTo(copy, 0);
-            return copy;
-        }
-
-        var items = new List<object?>();
-        foreach (var item in (IEnumerable)sequence)
-        {
-            items.Add(item);
-        }
-
-        return items.ToArray();
     }
 
     private void Push(int index) => _path.Add(new Step { Kind = Segment.Index, Index = index });
@@ -443,12 +536,12 @@ internal sealed class Comparison
     private void Add(Kind kind, object? actual, object? expected, string? name = null)
     {
         Total++;
-        if (_quiet || _differences is null || _differences.Count >= _maxListed)
+        if (_quiet || !_collect || (_differences is not null && _differences.Count >= _maxListed))
         {
             return;
         }
 
-        _differences.Add(new Difference(PathText(), Describe(kind, actual, expected, name)));
+        (_differences ??= new List<Difference>()).Add(new Difference(PathText(), Describe(kind, actual, expected, name)));
     }
 
     private static string Describe(Kind kind, object? actual, object? expected, string? name) => kind switch
@@ -461,6 +554,8 @@ internal sealed class Comparison
         Kind.UnexpectedKey => $"has unexpected key {Formatter.Format(actual)}",
         Kind.Cycle => "is a cyclic reference",
         Kind.Depth => $"is nested deeper than {Equivalency.MaxDepth} levels",
+        Kind.TooMany => $"has more than {Equivalency.MaxItems} items, not compared",
+        Kind.NoMembers => "has no members to compare",
         _ => $"threw {actual!.GetType().Name}: {((Exception)actual).Message}",
     };
 

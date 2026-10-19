@@ -21,8 +21,14 @@ internal sealed class DictionaryView
         }
 
         var snapshot = new Dictionary<object, object?>();
+        var seen = 0;
         foreach (var pair in (IEnumerable)dictionary)
         {
+            if (seen++ == Equivalency.MaxItems)
+            {
+                throw new TooManyItemsException();
+            }
+
             var shape = MemberCache.ShapeOf(pair!.GetType());
             var key = shape.Find("Key")!.Get(pair);
             if (key is not null)

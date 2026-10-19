@@ -38,6 +38,23 @@ public class AllocationTests
 
     [Fact] public void String_NotBeNullOrEmpty() { var s = "abc"; AssertNoAllocation(() => s.Should().NotBeNullOrEmpty()); }
 
+    [Fact] public void Int_BeEquivalentTo() { var n = 5; AssertNoAllocation(() => n.Should().BeEquivalentTo(5)); }
+
+    [Fact] public void Guid_BeEquivalentTo() { var id = Guid.NewGuid(); AssertNoAllocation(() => id.Should().BeEquivalentTo(id)); }
+
+    [Fact] public void Object_string_BeEquivalentTo() { object s = new string('a', 3); var t = new string('a', 3); AssertNoAllocation(() => s.Should().BeEquivalentTo(t)); }
+
+    [Fact]
+    public void Small_record_BeEquivalentTo_allocation_is_bounded()
+    {
+        var a = new Row("A", 1);
+        var b = new Row("A", 1);
+        a.Should().BeEquivalentTo(b);
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        for (var i = 0; i < Calls; i++) a.Should().BeEquivalentTo(b);
+        Assert.True((GC.GetAllocatedBytesForCurrentThread() - before) / Calls <= 512);
+    }
+
     private static long BytesForContainKey(int size)
     {
         var d = Enumerable.Range(0, size).ToDictionary(i => i, i => i);

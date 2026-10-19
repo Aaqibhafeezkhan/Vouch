@@ -23,7 +23,28 @@ public abstract class CollectionAssertionsBase<T, TSelf>
 
     protected bool IsNull => Source is null;
 
-    protected IReadOnlyList<T> Items => _list ??= Source!.ToList();
+    protected IReadOnlyList<T> Items => _list ??= Materialise();
+
+    private List<T> Materialise()
+    {
+        if (Source is ICollection<T>)
+        {
+            return Source.ToList();
+        }
+
+        var list = new List<T>();
+        foreach (var item in Source!)
+        {
+            if (list.Count == Equivalency.MaxItems)
+            {
+                Fail.With($"{Name} has more than {Equivalency.MaxItems} items, not compared.");
+            }
+
+            list.Add(item);
+        }
+
+        return list;
+    }
 
     protected string Name => Fail.Name(_expression);
 
@@ -269,6 +290,18 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         return And();
     }
 
+    public AndConstraint<TSelf> BeEquivalentTo(params T[] expectation)
+    {
+        ArgumentNullException.ThrowIfNull(expectation);
+        return CheckEquivalent(expectation, EquivalencyOptions.Default);
+    }
+
+    public AndConstraint<TSelf> BeEquivalentTo(T[] expectation, Func<EquivalencyOptions, EquivalencyOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(expectation);
+        return CheckEquivalent(expectation, Equivalency.Options(configure));
+    }
+
     public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation)
     {
         ArgumentNullException.ThrowIfNull(expectation);
@@ -280,20 +313,6 @@ public abstract class CollectionAssertionsBase<T, TSelf>
         ArgumentNullException.ThrowIfNull(expectation);
         return CheckEquivalent(expectation, Equivalency.Options(configure));
     }
-
-    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(params TExpectation[] expectation)
-    {
-        ArgumentNullException.ThrowIfNull(expectation);
-        if (expectation.Length == 1 && expectation[0] is System.Collections.IEnumerable single and not string && SpreadsSingleArgument(single))
-        {
-            return CheckEquivalent(single, EquivalencyOptions.Default);
-        }
-
-        return CheckEquivalent(expectation, EquivalencyOptions.Default);
-    }
-
-    private static bool SpreadsSingleArgument(System.Collections.IEnumerable single) =>
-        !Equivalency.IsCollection(typeof(T)) || Equivalency.ElementsAreCollections(single.GetType());
 
     private AndConstraint<TSelf> CheckEquivalent(object expectation, EquivalencyOptions options)
     {

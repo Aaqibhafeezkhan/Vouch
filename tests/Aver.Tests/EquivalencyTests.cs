@@ -514,6 +514,150 @@ public class EquivalencyTests
         Assert.Throws<AverException>(() => new Dictionary<string, object?> { ["a"] = null }.Should().BeEquivalentTo(new Dictionary<string, object?> { ["a"] = new object() }));
     }
 
+    // fix round 1
+
+    public sealed class OneShotSequence : IEnumerable<int>
+    {
+        private readonly int[] _items;
+        private bool _used;
+
+        public OneShotSequence(params int[] items) => _items = items;
+
+        public IEnumerator<int> GetEnumerator()
+        {
+            if (_used)
+            {
+                throw new InvalidOperationException("enumerated twice");
+            }
+
+            _used = true;
+            return ((IEnumerable<int>)_items).GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    private static Holder Shot(params int[] items) => new() { Items = new OneShotSequence(items) };
+
+    [Fact] public void Nested_one_shot_members_that_differ_fail_in_any_order_mode() => Assert.Throws<AverException>(() => new[] { Shot(1, 2) }.Should().BeEquivalentTo(new[] { Shot(3, 4) }));
+
+    [Fact]
+    public void Swapped_items_with_one_shot_members_compare_by_content()
+    {
+        new[] { Shot(1, 2), Shot(3, 4) }.Should().BeEquivalentTo(new[] { Shot(3, 4), Shot(1, 2) });
+        Assert.Throws<AverException>(() => new[] { Shot(1, 2), Shot(3, 4) }.Should().BeEquivalentTo(new[] { Shot(3, 4), Shot(9, 9) }));
+    }
+
+    [Fact] public void One_shot_member_that_throws_on_a_second_pass_is_read_once() => new[] { Shot(1, 2), Shot(3, 4), Shot(5, 6) }.Should().BeEquivalentTo(new[] { Shot(5, 6), Shot(3, 4), Shot(1, 2) });
+
+    [Fact] public void One_shot_members_of_a_large_list_are_read_once() => Enumerable.Range(0, 200).Select(i => Shot(i, i + 1)).ToList().Should().BeEquivalentTo(Enumerable.Range(0, 200).Reverse().Select(i => Shot(i, i + 1)).ToList());
+
+    public class Empty { }
+
+    public class Nested { public Empty? X { get; set; } }
+
+    [Fact]
+    public void Expectation_with_no_members_is_a_difference()
+    {
+        Assert.Equal("Expected value to be equivalent to the expected Empty, but:\n  has no members to compare.", Message(() => new ObjectAssertions(new EqPerson { Id = 1 }, null).BeEquivalentTo(new Empty())));
+        Assert.Contains("has no members to compare", Message(() => new EqPerson { Id = 1 }.Should().BeEquivalentTo(new object())));
+        Assert.Contains("has no members to compare", Message(() => new EqPerson { Id = 1 }.Should().BeEquivalentTo(new { })));
+    }
+
+    [Fact] public void Nested_expectation_with_no_members_reports_its_path() => Assert.Contains("\n  Inner has no members to compare.", Message(() => new OtherWrapper { Inner = new EqPerson { Id = 1 } }.Should().BeEquivalentTo(new OtherWrapper { Inner = new Empty() })));
+
+    [Fact]
+    public void Empty_expectation_still_passes_for_scalar_equatable_and_collection_kinds()
+    {
+        Array.Empty<int>().Should().BeEquivalentTo(Array.Empty<int>());
+        new Money(1m).Should().BeEquivalentTo(new Money(1m));
+        new Dictionary<string, int>().Should().BeEquivalentTo(new Dictionary<string, int>());
+    }
+
+    [Fact]
+    public void Collection_overloads_bind_as_pinned()
+    {
+        var list = new List<string> { "a", "b" };
+        Func<string[], AndConstraint<GenericCollectionAssertions<string>>> items = list.Should().BeEquivalentTo;
+        Func<IEnumerable<string>, AndConstraint<GenericCollectionAssertions<string>>> sequence = list.Should().BeEquivalentTo;
+        items(new[] { "b", "a" });
+        sequence(new List<string> { "b", "a" });
+    }
+
+    [Fact]
+    public void List_of_strings_binds_the_sequence_array_and_params_forms()
+    {
+        var list = new List<string> { "a", "b" };
+        list.Should().BeEquivalentTo(new List<string> { "b", "a" });
+        list.Should().BeEquivalentTo("b", "a");
+        list.Should().BeEquivalentTo(new[] { "b", "a" });
+        Assert.Throws<AverException>(() => list.Should().BeEquivalentTo(new List<string> { "b", "c" }));
+        Assert.Throws<AverException>(() => list.Should().BeEquivalentTo("a"));
+    }
+
+    [Fact]
+    public void A_list_of_lists_takes_one_list_as_one_item_and_an_enumerable_as_the_sequence()
+    {
+        var subject = new List<List<int>> { new() { 1, 2 } };
+        subject.Should().BeEquivalentTo(new List<int> { 1, 2 });
+        Assert.Throws<AverException>(() => subject.Should().BeEquivalentTo((IEnumerable<int>)new List<int> { 1, 2 }));
+    }
+
+    [Fact]
+    public void Array_with_configure_uses_the_instance_overload()
+    {
+        Func<int[], Func<EquivalencyOptions, EquivalencyOptions>, AndConstraint<GenericCollectionAssertions<int>>> f = new[] { 1 }.Should().BeEquivalentTo;
+        f(new[] { 1 }, o => o.WithStrictOrdering());
+    }
+
+    private static IEnumerable<int> Endless() { var i = 0; while (true) { yield return i++; } }
+
+    public class Endlessly { public IEnumerable<int> Items => Endless(); }
+
+    private static string MessageWithin(Action act)
+    {
+        var task = Task.Run(() => Message(act));
+        Assert.True(task.Wait(TimeSpan.FromSeconds(30)), "timed out");
+        return task.Result;
+    }
+
+    [Fact] public void Endless_member_is_capped() => Assert.Contains("Items has more than 1000000 items, not compared.", MessageWithin(() => new Endlessly().Should().BeEquivalentTo(new Holder { Items = new[] { 1 } })));
+
+    [Fact] public void Endless_collection_subject_is_capped() => Assert.Contains("has more than 1000000 items, not compared", MessageWithin(() => Endless().Should().HaveCount(1)));
+
+    [Fact] public void Endless_dictionary_snapshot_is_capped() => Assert.Contains("has more than 1000000 items, not compared", MessageWithin(() => new Dictionary<int, int>().Should().BeEquivalentTo(new EndlessDictionary())));
+
+    public sealed class EndlessDictionary : IReadOnlyDictionary<int, int>
+    {
+        public int this[int key] => key;
+        public IEnumerable<int> Keys => Endless();
+        public IEnumerable<int> Values => Endless();
+        public int Count => int.MaxValue;
+        public bool ContainsKey(int key) => true;
+        public bool TryGetValue(int key, out int value) { value = key; return true; }
+        public IEnumerator<KeyValuePair<int, int>> GetEnumerator() { var i = 0; while (true) { yield return new(i, i); i++; } }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+    }
+
+    [Fact]
+    public void Large_nested_lists_with_one_mismatch_finish_quickly()
+    {
+        var a = Enumerable.Range(0, 5_000).Select(i => new List<int> { i, i + 1, i + 2 }).ToList();
+        var b = a.AsEnumerable().Reverse().Select(l => l.ToList()).ToList();
+        b[100] = new List<int> { -1, -1, -1 };
+        var sw = Stopwatch.StartNew();
+        var msg = Message(() => a.Should().BeEquivalentTo(b));
+        Assert.True(sw.ElapsedMilliseconds < 3_000, sw.ElapsedMilliseconds.ToString());
+        Assert.Contains("[100] expected [-1, -1, -1] was not found.", msg);
+    }
+
+    [Fact]
+    public void One_more_difference_is_singular()
+    {
+        var msg = Message(() => Enumerable.Range(0, 11).ToArray().Should().BeEquivalentTo(Enumerable.Range(100, 11).ToArray(), o => o.WithStrictOrdering()));
+        Assert.EndsWith("\n  ... and 1 more difference", msg);
+    }
+
     public sealed class ReadOnlyOnlyDictionary : IReadOnlyDictionary<string, int>
     {
         private readonly Dictionary<string, int> _inner;
