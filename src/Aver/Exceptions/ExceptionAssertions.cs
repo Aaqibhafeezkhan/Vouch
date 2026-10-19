@@ -1,0 +1,29 @@
+namespace Aver;
+
+public sealed class ExceptionAssertions<TException> where TException : Exception
+{
+    private readonly string _name;
+
+    internal ExceptionAssertions(TException exception, string name)
+    {
+        Which = exception;
+        _name = name;
+    }
+
+    public TException Which { get; }
+
+    public TException Subject => Which;
+
+    public ExceptionAssertions<TException> And => this;
+
+    public ExceptionAssertions<TException> WithMessage(string pattern)
+    {
+        ArgumentNullException.ThrowIfNull(pattern);
+        if (!Wildcard.IsMatch(Which.Message, pattern))
+        {
+            Fail.With($"Expected {_name}'s exception message to match {Formatter.Format(pattern)}, but found {Formatter.Format(Which.Message)}.");
+        }
+
+        return this;
+    }
+}

@@ -118,4 +118,20 @@ public static class ShouldExtensions
         [CallerArgumentExpression(nameof(subject))] string? expression = null)
         where TKey : notnull
         => new(subject, expression);
+
+    public static ActionAssertions Should(this Action? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static AsyncFunctionAssertions Should(this Func<Task>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
+
+    public static AsyncFunctionAssertions Should<T>(this Func<Task<T>>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject is null ? null : () => subject(), expression);
+
+    public static FunctionAssertions<T> Should<T>(this Func<T>? subject,
+        [CallerArgumentExpression(nameof(subject))] string? expression = null)
+        => new(subject, expression);
 }
