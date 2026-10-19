@@ -752,4 +752,34 @@ public class ExceptionAssertionsTests
         var ex = await Assert.ThrowsAsync<AverException>(async () => await act.Should().NotThrowAsync("it is valid"));
         Assert.EndsWith("Because it is valid.", ex.Message);
     }
+
+    private const string AsyncVoidMessage = "Cannot use action assertions on an async void method. Assign the async method to a variable of type Func<Task> instead of Action so that it can be awaited.";
+
+    [Fact]
+    public void Throw_on_an_async_void_action_refuses_and_never_runs_it()
+    {
+        var invoked = false;
+        Action act = async () => { invoked = true; await Task.Yield(); throw new InvalidOperationException("boom"); };
+        var ex = Assert.Throws<InvalidOperationException>(() => act.Should().Throw<Exception>());
+        Assert.Equal(AsyncVoidMessage, ex.Message);
+        Assert.False(invoked);
+    }
+
+    [Fact]
+    public void NotThrow_on_an_async_void_action_refuses_and_never_runs_it()
+    {
+        var invoked = false;
+        Action act = async () => { invoked = true; await Task.Yield(); throw new InvalidOperationException("boom"); };
+        var ex = Assert.Throws<InvalidOperationException>(() => act.Should().NotThrow());
+        Assert.Equal(AsyncVoidMessage, ex.Message);
+        Assert.False(invoked);
+    }
+
+    [Fact]
+    public void Throw_with_a_reason_on_an_async_void_action_refuses()
+    {
+        Action act = async () => await Task.Yield();
+        Assert.Equal(AsyncVoidMessage, Assert.Throws<InvalidOperationException>(() => act.Should().Throw<Exception>("why")).Message);
+        Assert.Equal(AsyncVoidMessage, Assert.Throws<InvalidOperationException>(() => act.Should().NotThrow("why")).Message);
+    }
 }

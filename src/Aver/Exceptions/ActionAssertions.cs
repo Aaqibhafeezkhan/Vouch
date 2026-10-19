@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Aver;
 
 public readonly struct ActionAssertions
@@ -20,6 +22,7 @@ public readonly struct ActionAssertions
             ExceptionMessages.NullDelegate(name, $"to throw {Formatter.Format(typeof(TException))}");
         }
 
+        RejectAsyncVoid(Subject!);
         return ExceptionMessages.Check<TException>(name, Capture.Run(Subject!));
     }
 
@@ -31,6 +34,7 @@ public readonly struct ActionAssertions
             ExceptionMessages.NullDelegate(name, "not to throw");
         }
 
+        RejectAsyncVoid(Subject!);
         var thrown = Capture.Run(Subject!);
         if (thrown is not null)
         {
@@ -38,6 +42,14 @@ public readonly struct ActionAssertions
         }
 
         return new(this);
+    }
+
+    private static void RejectAsyncVoid(Action action)
+    {
+        if (action.Method.IsDefined(typeof(AsyncStateMachineAttribute), false))
+        {
+            throw new InvalidOperationException("Cannot use action assertions on an async void method. Assign the async method to a variable of type Func<Task> instead of Action so that it can be awaited.");
+        }
     }
 
     public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
