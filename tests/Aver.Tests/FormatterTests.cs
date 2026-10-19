@@ -6,6 +6,7 @@ namespace Aver.Tests;
 public record Row(string Code, int Qty);
 public record struct Tick(int N);
 public class Node { public Node? Next { get; set; } }
+public class Pair { public Node? A { get; set; } public Node? B { get; set; } }
 public class Bad { public int Value => throw new InvalidOperationException(); }
 public class BadToString { public override string ToString() => throw new InvalidOperationException(); }
 public class Named { public override string ToString() => "named!"; }
@@ -59,12 +60,43 @@ public class FormatterTests
     [Fact] public void Deep_graph_stops_at_max_depth() => Assert.Contains("{ ... }", Formatter.Format(MakeChain(20)));
     [Fact] public void Long_string_is_cut() => Assert.EndsWith("... (300 more chars)\"", Formatter.Format(new string('a', 500)));
 
-    [Fact]
-    public void Huge_list_formats_fast()
+    private static int _moves;
+
+    private static IEnumerable<int> Counting(int n)
     {
-        var sw = Stopwatch.StartNew();
-        Formatter.Format(Enumerable.Range(0, 1_000_000));
-        Assert.True(sw.ElapsedMilliseconds < 100);
+        for (var i = 0; i < n; i++) { _moves++; yield return i; }
+    }
+
+    [Fact]
+    public void Huge_sequence_is_cut_while_enumerating()
+    {
+        _moves = 0;
+        var text = Formatter.Format(Counting(1_000_000));
+        Assert.True(_moves <= 100_011, $"enumerated {_moves}");
+        Assert.EndsWith("(100000+ more)]", text);
+    }
+
+    [Fact] public void Big_list_reports_exact_count() => Assert.EndsWith("... (100000 more)]", Formatter.Format(Enumerable.Range(0, 100_010).ToList()));
+    [Fact] public void Big_dictionary_reports_exact_count() => Assert.EndsWith("... (140 more)}", Formatter.Format(Enumerable.Range(0, 150).ToDictionary(i => i, i => i)));
+
+    [Fact]
+    public async Task Unfinished_task_does_not_block()
+    {
+        var format = Task.Run(() => Formatter.Format(new TaskCompletionSource<int>().Task));
+        var finished = await Task.WhenAny(format, Task.Delay(TimeSpan.FromSeconds(5)));
+        Assert.Same(format, finished);
+        Assert.Equal("Task<Int32> { Status = WaitingForActivation }", await format);
+    }
+
+    [Fact] public void Lazy_is_not_evaluated() => Assert.Equal("Lazy<Int32> { IsValueCreated = false }", Formatter.Format(new Lazy<int>(() => throw new InvalidOperationException())));
+
+    [Fact]
+    public void Shared_child_is_not_a_cycle()
+    {
+        var shared = new Node();
+        var text = Formatter.Format(new Pair { A = shared, B = shared });
+        Assert.DoesNotContain("<cycle", text);
+        Assert.Equal("Pair { A = Node { Next = null }, B = Node { Next = null } }", text);
     }
 
     [Fact]

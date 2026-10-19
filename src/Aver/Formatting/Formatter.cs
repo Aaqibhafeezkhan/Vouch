@@ -71,6 +71,10 @@ internal static class Formatter
             {
                 WriteSequence(sb, enumerable, depth, path);
             }
+            else if (SafeMembers(type) is { } safe)
+            {
+                WriteObject(sb, value, type, depth, path, safe);
+            }
             else if (!IsRecord(type) && !IsAnonymous(type) && OverridesToString(type))
             {
                 WriteToString(sb, value);
@@ -159,7 +163,7 @@ internal static class Formatter
                     count++;
                 }
 
-                WriteRemainder(sb, enumerator, count);
+                WriteRemainder(sb, enumerator, sequence, count);
             }
             finally
             {
@@ -203,7 +207,7 @@ internal static class Formatter
                     count++;
                 }
 
-                WriteRemainder(sb, enumerator, count);
+                WriteRemainder(sb, enumerator, dictionary, count);
             }
             finally
             {
@@ -218,10 +222,20 @@ internal static class Formatter
         sb.Append('}');
     }
 
-    private static void WriteRemainder(StringBuilder sb, IEnumerator enumerator, int shown)
+    private static void WriteRemainder(StringBuilder sb, IEnumerator enumerator, object source, int shown)
     {
         if (shown < MaxItems)
         {
+            return;
+        }
+
+        if (source is ICollection collection)
+        {
+            if (collection.Count > shown)
+            {
+                sb.Append(", ... (").Append(collection.Count - shown).Append(" more)");
+            }
+
             return;
         }
 
@@ -251,7 +265,7 @@ internal static class Formatter
         }
     }
 
-    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, HashSet<object> path)
+    private static void WriteObject(StringBuilder sb, object value, Type type, int depth, HashSet<object> path, List<MemberInfo>? only = null)
     {
         var anonymous = IsAnonymous(type);
         if (!anonymous)
@@ -265,7 +279,7 @@ internal static class Formatter
             return;
         }
 
-        var members = MembersOf(type);
+        var members = only ?? MembersOf(type);
         if (members.Count == 0)
         {
             sb.Append("{ }");
@@ -293,6 +307,12 @@ internal static class Formatter
                 continue;
             }
 
+            if (only is not null && memberValue is Enum state)
+            {
+                sb.Append(state.ToString());
+                continue;
+            }
+
             Write(sb, memberValue, depth + 1, path);
         }
 
@@ -312,6 +332,26 @@ internal static class Formatter
 
         members.AddRange(type.GetFields(BindingFlags.Public | BindingFlags.Instance));
         return members;
+    }
+
+    private static List<MemberInfo>? SafeMembers(Type type)
+    {
+        string? name = null;
+        if (typeof(Task).IsAssignableFrom(type))
+        {
+            name = nameof(Task.Status);
+        }
+        else if (type.Namespace == "System.Threading.Tasks" && type.Name.StartsWith("ValueTask", StringComparison.Ordinal))
+        {
+            name = nameof(Task.IsCompleted);
+        }
+        else if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Lazy<>))
+        {
+            name = "IsValueCreated";
+        }
+
+        var property = name is null ? null : type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+        return property is null ? null : [property];
     }
 
     private static bool OverridesToString(Type type)
