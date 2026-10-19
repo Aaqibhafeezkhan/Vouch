@@ -14,6 +14,7 @@ internal sealed class AnyOrderMatcher
     private bool _cheap;
     private Dictionary<Type, HashIndex?>? _byType;
     private int _firstUnused;
+    private bool _exactNumbers;
 
     private AnyOrderMatcher(Comparison run, object?[] subject)
     {
@@ -24,7 +25,7 @@ internal sealed class AnyOrderMatcher
 
     public static void Run(Comparison run, object?[] subject, object?[] expected)
     {
-        var matcher = new AnyOrderMatcher(run, subject);
+        var matcher = new AnyOrderMatcher(run, subject) { _exactNumbers = SingleNumericType(subject, expected) };
         for (var i = 0; i < expected.Length && !run.Stop; i++)
         {
             var item = expected[i];
@@ -40,6 +41,51 @@ internal sealed class AnyOrderMatcher
             {
                 matcher._used[match] = true;
             }
+        }
+    }
+
+    private static bool SingleNumericType(object?[] subject, object?[] expected)
+    {
+        Type? type = null;
+        foreach (var items in new[] { subject, expected })
+        {
+            foreach (var item in items)
+            {
+                if (item is null || !(item is Enum || Numbers.IsNumber(item)))
+                {
+                    continue;
+                }
+
+                var current = item.GetType();
+                if (type is null)
+                {
+                    type = current;
+                }
+                else if (type != current)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static int TopLevelHash(object value, bool exactNumbers)
+    {
+        if (!exactNumbers)
+        {
+            return ScalarHash(value);
+        }
+
+        switch (value)
+        {
+            case double d:
+                return double.IsNaN(d) ? 1 : d == 0 ? 0 : d.GetHashCode();
+            case float f:
+                return float.IsNaN(f) ? 1 : f == 0 ? 0 : f.GetHashCode();
+            default:
+                return value.GetHashCode();
         }
     }
 
@@ -157,13 +203,13 @@ internal sealed class AnyOrderMatcher
             {
                 if (TrySequenceHash(_run, item, out hash))
                 {
-                    hashIndex = _sequences ??= HashIndex.Build(_run, _subject, null, sequences: true);
+                    hashIndex = _sequences ??= HashIndex.Build(_run, _subject, null, sequences: true, false);
                 }
             }
             else if (shape.Kind == TypeKind.Scalar)
             {
-                hash = ScalarHash(item);
-                hashIndex = _scalars ??= HashIndex.Build(_run, _subject, null, sequences: false);
+                hash = TopLevelHash(item, _exactNumbers);
+                hashIndex = _scalars ??= HashIndex.Build(_run, _subject, null, sequences: false, _exactNumbers);
             }
             else if (shape.Kind == TypeKind.Members && shape.Members.Length > 0 && TryHash(item, shape.Members, out hash))
             {
@@ -171,7 +217,7 @@ internal sealed class AnyOrderMatcher
                 var type = item.GetType();
                 if (!_byType.TryGetValue(type, out hashIndex))
                 {
-                    hashIndex = HashIndex.Build(_run, _subject, shape.Members, sequences: false);
+                    hashIndex = HashIndex.Build(_run, _subject, shape.Members, sequences: false, false);
                     _byType[type] = hashIndex;
                 }
             }
@@ -253,7 +299,7 @@ internal sealed class AnyOrderMatcher
         public int[] Next = [];
         public int WildcardHead = -1;
 
-        public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences)
+        public static HashIndex Build(Comparison run, object?[] subject, MemberGetter[]? keys, bool sequences, bool exactNumbers)
         {
             var index = new HashIndex { Next = new int[subject.Length], Heads = new int[subject.Length] };
             var buckets = 0;
@@ -261,7 +307,7 @@ internal sealed class AnyOrderMatcher
             {
                 int hash;
                 var hashed = sequences ? TrySequenceHash(run, subject[j], out hash)
-                    : keys is null ? TryHashScalar(subject[j], out hash) : TryHash(subject[j], keys, out hash);
+                    : keys is null ? TryHashScalar(subject[j], exactNumbers, out hash) : TryHash(subject[j], keys, out hash);
                 if (!hashed)
                 {
                     index.Next[j] = index.WildcardHead;
@@ -283,11 +329,11 @@ internal sealed class AnyOrderMatcher
             return index;
         }
 
-        private static bool TryHashScalar(object? item, out int hash)
+        private static bool TryHashScalar(object? item, bool exactNumbers, out int hash)
         {
             if (item is not null && MemberCache.IsScalarType(item.GetType()))
             {
-                hash = ScalarHash(item);
+                hash = TopLevelHash(item, exactNumbers);
                 return true;
             }
 

@@ -61,4 +61,30 @@ public class NumbersHashTests
         subject.Should().BeEquivalentTo(expected);
         Assert.True(clock.Elapsed < TimeSpan.FromSeconds(2), $"took {clock.Elapsed}");
     }
+
+    [Fact]
+    public void Ten_thousand_millisecond_timestamps_match_in_reverse_quickly()
+    {
+        var subject = Enumerable.Range(0, 10_000).Select(i => 1_700_000_000_000L + i).ToArray();
+        var clock = Stopwatch.StartNew();
+        subject.Should().BeEquivalentTo(subject.Reverse().ToArray());
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(2), $"took {clock.Elapsed}");
+    }
+
+    [Fact]
+    public void Ten_thousand_large_decimals_match_in_reverse_quickly()
+    {
+        var subject = Enumerable.Range(0, 10_000).Select(i => 10_000_000_000m + i).ToArray();
+        var clock = Stopwatch.StartNew();
+        subject.Should().BeEquivalentTo(subject.Reverse().ToArray());
+        Assert.True(clock.Elapsed < TimeSpan.FromSeconds(2), $"took {clock.Elapsed}");
+    }
+
+    [Fact]
+    public void Mixed_float_and_double_lists_still_match_in_any_order()
+    {
+        var subject = Enumerable.Range(0, 40).Select(i => (object)(i + 0.5f)).ToArray();
+        var expected = Enumerable.Range(0, 40).Select(i => (object)(i + 0.5d)).Reverse().ToArray();
+        subject.Should().BeEquivalentTo(expected);
+    }
 }
