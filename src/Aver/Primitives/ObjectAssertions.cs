@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace Aver;
 
 public readonly struct ObjectAssertions
@@ -155,4 +157,133 @@ public readonly struct ObjectAssertions
     }
 
     private string TypeOrNull() => Subject is null ? "null" : Formatter.Format(Subject.GetType());
+
+    public AndConstraint<ObjectAssertions> Be(object? expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ObjectAssertions> NotBe(object? unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ObjectAssertions> BeNull(string because)
+    {
+        try
+        {
+            return BeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ObjectAssertions> NotBeNull(string because)
+    {
+        try
+        {
+            return NotBeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<ObjectAssertions, T> BeOfType<T>(string because)
+    {
+        try
+        {
+            return BeOfType<T>();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<ObjectAssertions, T> BeAssignableTo<T>(string because)
+    {
+        try
+        {
+            return BeAssignableTo<T>();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ObjectAssertions> BeOfType(Type expectedType)
+    {
+        ArgumentNullException.ThrowIfNull(expectedType);
+        if (Subject is null || Subject.GetType() != expectedType)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be of type {Formatter.Format(expectedType)}, but found {TypeOrNull()}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<ObjectAssertions> BeOfType(Type expectedType, string because)
+    {
+        try
+        {
+            return BeOfType(expectedType);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ObjectAssertions> Match<T>(Expression<Func<T, bool>> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        if (Subject is null)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to match {predicate.Body}, but found null.");
+        }
+
+        if (Subject is not T typed)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be of type {Formatter.Format(typeof(T))} matching {predicate.Body}, but found {TypeOrNull()}.");
+            return default;
+        }
+
+        if (!predicate.Compile()(typed))
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to match {predicate.Body}, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<ObjectAssertions> Match<T>(Expression<Func<T, bool>> predicate, string because)
+    {
+        try
+        {
+            return Match(predicate);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }

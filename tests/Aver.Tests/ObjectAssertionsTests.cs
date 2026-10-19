@@ -49,4 +49,22 @@ public class ObjectAssertionsTests
     [Fact] public void And_chains_back_to_the_same_assertions() { object o = 1; o.Should().NotBeNull().And.Be(1); }
 
     [Fact] public void Missing_expression_reads_as_value() => Assert.Equal("value", Fail.Name(null));
+
+    private static string Msg(Action act) => Assert.Throws<AverException>(act).Message;
+
+    [Fact] public void Match_passes_when_the_predicate_holds() { object o = new Order(5); o.Should().Match<Order>(x => x.Total == 5); }
+    [Fact] public void Match_works_on_a_typed_subject() { var order = new Order(5); order.Should().Match<Order>(x => x.Total > 1); }
+    [Fact] public void Match_returns_the_assertions_for_chaining() { object o = new Order(5); o.Should().Match<Order>(x => x.Total == 5).And.NotBeNull(); }
+    [Fact] public void Match_fails_when_the_predicate_does_not_hold() { object o = new Order(5); Assert.Throws<AverException>(() => o.Should().Match<Order>(x => x.Total == 6)); }
+    [Fact] public void Match_message_names_the_predicate_and_the_value() { var o = new Order(5); Assert.Equal("Expected o to match (x.Total == 6), but found Order { Total = 5 }.", Msg(() => o.Should().Match<Order>(x => x.Total == 6))); }
+    [Fact] public void Match_fails_on_null() { object? o = null; Assert.Equal("Expected o to match (x.Total == 5), but found null.", Msg(() => o.Should().Match<Order>(x => x.Total == 5))); }
+    [Fact] public void Match_fails_on_another_type() { object o = "text"; Assert.Equal("Expected o to be of type Order matching (x.Total == 5), but found String.", Msg(() => o.Should().Match<Order>(x => x.Total == 5))); }
+    [Fact] public void Match_null_predicate_throws_ArgumentNullException() { object o = new Order(5); Assert.Throws<ArgumentNullException>(() => o.Should().Match<Order>(null!)); }
+    [Fact] public void Match_takes_a_reason() { var o = new Order(5); o.Should().Match<Order>(x => x.Total == 5, "it is five"); Assert.Equal("Expected o to match (x.Total == 6), but found Order { Total = 5 }. Because it is six.", Msg(() => o.Should().Match<Order>(x => x.Total == 6, "it is six"))); }
+
+    [Fact] public void BeOfType_by_Type_passes_on_the_exact_type() { object o = new Order(1); o.Should().BeOfType(typeof(Order)); }
+    [Fact] public void BeOfType_by_Type_is_exact() { object o = new Order(1); Assert.Throws<AverException>(() => o.Should().BeOfType(typeof(object))); }
+    [Fact] public void BeOfType_by_Type_message() { object o = new Order(1); Assert.Equal("Expected o to be of type String, but found Order.", Msg(() => o.Should().BeOfType(typeof(string)))); }
+    [Fact] public void BeOfType_by_Type_fails_on_null() { object? o = null; Assert.Equal("Expected o to be of type String, but found null.", Msg(() => o.Should().BeOfType(typeof(string)))); }
+    [Fact] public void BeOfType_by_Type_null_type_throws_ArgumentNullException() { object o = new Order(1); Assert.Throws<ArgumentNullException>(() => o.Should().BeOfType((Type)null!)); }
 }

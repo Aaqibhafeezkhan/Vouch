@@ -121,6 +121,102 @@ public readonly struct NumericAssertions<T> where T : struct, INumber<T>
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
         return new(this);
     }
+
+    public AndConstraint<NumericAssertions<T>> Be(T expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> NotBe(T unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeGreaterThan(T expected, string because)
+    {
+        try
+        {
+            return BeGreaterThan(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeGreaterThanOrEqualTo(T expected, string because)
+    {
+        try
+        {
+            return BeGreaterThanOrEqualTo(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeLessThan(T expected, string because)
+    {
+        try
+        {
+            return BeLessThan(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeLessThanOrEqualTo(T expected, string because)
+    {
+        try
+        {
+            return BeLessThanOrEqualTo(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BePositive(string because)
+    {
+        try
+        {
+            return BePositive();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NumericAssertions<T>> BeInRange(T min, T max, string because)
+    {
+        try
+        {
+            return BeInRange(min, max);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }
 
 public static class NumericApproximationExtensions

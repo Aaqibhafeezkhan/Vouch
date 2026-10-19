@@ -39,6 +39,30 @@ public readonly struct ActionAssertions
 
         return new(this);
     }
+
+    public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
+    {
+        try
+        {
+            return Throw<TException>();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ActionAssertions> NotThrow(string because)
+    {
+        try
+        {
+            return NotThrow();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }
 
 public readonly struct FunctionAssertions<T>
@@ -60,6 +84,30 @@ public readonly struct FunctionAssertions<T>
     {
         _inner.NotThrow();
         return new(this);
+    }
+
+    public ExceptionAssertions<TException> Throw<TException>(string because) where TException : Exception
+    {
+        try
+        {
+            return Throw<TException>();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<FunctionAssertions<T>> NotThrow(string because)
+    {
+        try
+        {
+            return NotThrow();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
     }
 }
 

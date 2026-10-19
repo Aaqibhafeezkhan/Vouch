@@ -20,4 +20,6 @@ public readonly struct AndWhichConstraint<TAssertions, TWhich>
     public TWhich Which { get; }
 
     public TWhich Subject => Which;
+
+    public TWhich WhoseValue => Which;
 }

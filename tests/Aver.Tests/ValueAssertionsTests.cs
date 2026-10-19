@@ -121,4 +121,32 @@ public class ValueAssertionsTests
         int? n = null;
         Assert.Equal("Expected n not to be null, but it was.", Assert.Throws<AverException>(() => n.Should().NotBeNull()).Message);
     }
+
+    private static string Msg(Action act) => Assert.Throws<AverException>(act).Message;
+
+    [Fact] public void TimeSpan_BeGreaterThan_passes_and_fails() { var t = TimeSpan.FromMinutes(2); t.Should().BeGreaterThan(TimeSpan.Zero); Assert.Throws<AverException>(() => t.Should().BeGreaterThan(t)); }
+    [Fact] public void TimeSpan_BeGreaterThan_message() { var t = TimeSpan.FromMinutes(2); Assert.Equal("Expected t to be greater than 00:03:00, but found 00:02:00.", Msg(() => t.Should().BeGreaterThan(TimeSpan.FromMinutes(3)))); }
+    [Fact] public void TimeSpan_BeGreaterThanOrEqualTo_passes_and_fails() { var t = TimeSpan.FromMinutes(2); t.Should().BeGreaterThanOrEqualTo(t); Assert.Throws<AverException>(() => t.Should().BeGreaterThanOrEqualTo(TimeSpan.FromMinutes(3))); }
+    [Fact] public void TimeSpan_BeGreaterThanOrEqualTo_message() { var t = TimeSpan.FromMinutes(2); Assert.Equal("Expected t to be greater than or equal to 00:03:00, but found 00:02:00.", Msg(() => t.Should().BeGreaterThanOrEqualTo(TimeSpan.FromMinutes(3)))); }
+    [Fact] public void TimeSpan_BeLessThan_passes_and_fails() { var t = TimeSpan.FromMinutes(2); t.Should().BeLessThan(TimeSpan.FromMinutes(3)); Assert.Throws<AverException>(() => t.Should().BeLessThan(t)); }
+    [Fact] public void TimeSpan_BeLessThan_message() { var t = TimeSpan.FromMinutes(2); Assert.Equal("Expected t to be less than 00:01:00, but found 00:02:00.", Msg(() => t.Should().BeLessThan(TimeSpan.FromMinutes(1)))); }
+    [Fact] public void TimeSpan_BeLessThanOrEqualTo_passes_and_fails() { var t = TimeSpan.FromMinutes(2); t.Should().BeLessThanOrEqualTo(t); Assert.Throws<AverException>(() => t.Should().BeLessThanOrEqualTo(TimeSpan.FromMinutes(1))); }
+    [Fact] public void TimeSpan_BeLessThanOrEqualTo_message() { var t = TimeSpan.FromMinutes(2); Assert.Equal("Expected t to be less than or equal to 00:01:00, but found 00:02:00.", Msg(() => t.Should().BeLessThanOrEqualTo(TimeSpan.FromMinutes(1)))); }
+    [Fact] public void Comparisons_chain() { TimeSpan.FromSeconds(5).Should().BeGreaterThan(TimeSpan.Zero).And.BeLessThan(TimeSpan.FromMinutes(1)); }
+
+    [Fact] public void Guid_NotBeEmpty_passes_on_a_real_guid() { var g = Guid.NewGuid(); g.Should().NotBeEmpty(); }
+    [Fact] public void Guid_NotBeEmpty_fails_on_empty() { var g = Guid.Empty; Assert.Throws<AverException>(() => g.Should().NotBeEmpty()); }
+    [Fact] public void Guid_NotBeEmpty_message() { var g = Guid.Empty; Assert.Equal("Expected g not to be empty, but it was.", Msg(() => g.Should().NotBeEmpty())); }
+
+    [Fact]
+    public void Nullable_Be_accepts_a_nullable_expected_value()
+    {
+        Guid? id = Guid.NewGuid();
+        Guid? same = id;
+        Guid? none = null;
+        id.Should().Be(same);
+        none.Should().Be(none);
+        Assert.Throws<AverException>(() => id.Should().Be(none));
+        Assert.Throws<AverException>(() => none.Should().Be(id));
+    }
 }

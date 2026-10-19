@@ -447,4 +447,176 @@ public class ExceptionAssertionsTests
         Func<Task> act = () => null!;
         Assert.Equal("Expected act not to throw, but it returned a null Task.", await MsgAsync(() => act.Should().NotThrowAsync()));
     }
+
+    private sealed class Service
+    {
+        public int Value() => 7;
+
+        public void Run(bool fail) { if (fail) throw new InvalidOperationException("run"); }
+
+        public Task RunAsync(bool fail) => fail ? Task.FromException(new InvalidOperationException("run")) : Task.CompletedTask;
+
+        public Task<int> ComputeAsync(bool fail) => fail ? Task.FromException<int>(new InvalidOperationException("run")) : Task.FromResult(7);
+    }
+
+    [Fact]
+    public void WithParameterName_passes_on_the_name()
+    {
+        Action act = () => throw new ArgumentException("bad", "reason");
+        act.Should().Throw<ArgumentException>().WithParameterName("reason");
+    }
+
+    [Fact]
+    public void WithParameterName_fails_on_another_name()
+    {
+        Action act = () => throw new ArgumentException("bad", "reason");
+        var thrown = act.Should().Throw<ArgumentException>();
+        Assert.Equal("Expected act's exception parameter name to be \"other\", but found \"reason\".", Msg(() => thrown.WithParameterName("other")));
+    }
+
+    [Fact]
+    public void WithParameterName_fails_when_there_is_no_name()
+    {
+        Action act = () => throw new ArgumentException("bad");
+        var thrown = act.Should().Throw<ArgumentException>();
+        Assert.Equal("Expected act's exception parameter name to be \"other\", but found null.", Msg(() => thrown.WithParameterName("other")));
+    }
+
+    [Fact]
+    public void WithParameterName_accepts_a_derived_exception()
+    {
+        Action act = () => throw new ArgumentNullException("item");
+        act.Should().Throw<ArgumentNullException>().WithParameterName("item");
+    }
+
+    [Fact]
+    public void WithParameterName_null_argument_throws_ArgumentNullException()
+    {
+        Action act = () => throw new ArgumentException("bad", "reason");
+        var thrown = act.Should().Throw<ArgumentException>();
+        Assert.Throws<ArgumentNullException>(() => thrown.WithParameterName(null!));
+    }
+
+    [Fact]
+    public async Task WithParameterName_chains_after_an_async_WithMessage()
+    {
+        Func<Task> act = () => Task.FromException(new ArgumentException("bad input", "reason"));
+        await act.Should().ThrowAsync<ArgumentException>().WithMessage("bad input*").WithParameterName("reason");
+    }
+
+    [Fact]
+    public async Task WithParameterName_on_a_task_fails_on_another_name()
+    {
+        Func<Task> act = () => Task.FromException(new ArgumentException("bad", "reason"));
+        Assert.Equal("Expected act's exception parameter name to be \"other\", but found \"reason\".", await MsgAsync(() => act.Should().ThrowAsync<ArgumentException>().WithParameterName("other")));
+    }
+
+    [Fact]
+    public async Task WithParameterName_on_a_task_null_argument_throws_ArgumentNullException()
+    {
+        Func<Task> act = () => Task.FromException(new ArgumentException("bad", "reason"));
+        await Assert.ThrowsAsync<ArgumentNullException>(() => act.Should().ThrowAsync<ArgumentException>().WithParameterName(null!));
+    }
+
+    [Fact]
+    public void Invoking_wraps_a_void_call()
+    {
+        var service = new Service();
+        service.Invoking(s => s.Run(true)).Should().Throw<InvalidOperationException>().WithMessage("run");
+        service.Invoking(s => s.Run(false)).Should().NotThrow();
+    }
+
+    [Fact]
+    public void Invoking_wraps_a_call_with_a_result()
+    {
+        var service = new Service();
+        service.Invoking(s => s.Value()).Should().NotThrow();
+        Assert.Throws<AverException>(() => service.Invoking(s => s.Value()).Should().Throw<InvalidOperationException>());
+    }
+
+    [Fact]
+    public async Task Invoking_wraps_an_async_call()
+    {
+        var service = new Service();
+        await service.Invoking(s => s.RunAsync(true)).Should().ThrowAsync<InvalidOperationException>().WithMessage("run");
+        await service.Invoking(s => s.RunAsync(false)).Should().NotThrowAsync();
+        await service.Invoking(s => s.ComputeAsync(true)).Should().ThrowAsync<InvalidOperationException>();
+        await service.Invoking(s => s.ComputeAsync(false)).Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public void Invoking_runs_nothing_until_asserted()
+    {
+        var calls = 0;
+        var action = this.Invoking(_ => calls++);
+        Assert.Equal(0, calls);
+        action.Should().NotThrow();
+        Assert.Equal(1, calls);
+    }
+
+    [Fact]
+    public void Invoking_failure_names_the_expression()
+    {
+        var service = new Service();
+        var act = service.Invoking(s => s.Run(true));
+        Assert.StartsWith("Expected act not to throw, but it threw InvalidOperationException", Msg(() => act.Should().NotThrow()));
+    }
+
+    [Fact]
+    public void Invoking_null_action_throws_ArgumentNullException()
+    {
+        var service = new Service();
+        Assert.Throws<ArgumentNullException>(() => service.Invoking((Action<Service>)null!));
+        Assert.Throws<ArgumentNullException>(() => service.Invoking((Func<Service, int>)null!));
+    }
+
+    [Fact]
+    public void FluentActions_Invoking_wraps_an_action_and_a_function()
+    {
+        FluentActions.Invoking(() => new Service().Run(true)).Should().Throw<InvalidOperationException>();
+        FluentActions.Invoking(() => new Service().Run(false)).Should().NotThrow();
+        FluentActions.Invoking(() => new Service().Value()).Should().NotThrow();
+    }
+
+    [Fact]
+    public async Task FluentActions_Awaiting_wraps_a_task_and_a_task_with_a_result()
+    {
+        await FluentActions.Awaiting(() => new Service().RunAsync(true)).Should().ThrowAsync<InvalidOperationException>();
+        await FluentActions.Awaiting(() => new Service().RunAsync(false)).Should().NotThrowAsync();
+        await FluentActions.Awaiting(() => new Service().ComputeAsync(true)).Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public void FluentActions_null_arguments_throw_ArgumentNullException()
+    {
+        Assert.Throws<ArgumentNullException>(() => FluentActions.Invoking((Action)null!));
+        Assert.Throws<ArgumentNullException>(() => FluentActions.Invoking((Func<int>)null!));
+        Assert.Throws<ArgumentNullException>(() => FluentActions.Awaiting((Func<Task>)null!));
+        Assert.Throws<ArgumentNullException>(() => FluentActions.Awaiting((Func<Task<int>>)null!));
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_on_a_typed_task_returns_the_result()
+    {
+        Func<Task<string>> act = () => Task.FromResult("done");
+        var result = await act.Should().NotThrowAsync();
+        Assert.Equal("done", result.Subject);
+        Assert.Equal("done", result.Which);
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_on_a_typed_task_fails_when_it_throws()
+    {
+        Func<Task<string>> act = () => Task.FromException<string>(new ArgumentException("Name is required."));
+        var ex = await Assert.ThrowsAsync<AverException>(async () => await act.Should().NotThrowAsync());
+        Assert.StartsWith("Expected act not to throw, but it threw ArgumentException", ex.Message);
+    }
+
+    [Fact]
+    public async Task NotThrowAsync_on_a_typed_task_adds_the_reason()
+    {
+        Func<Task<string>> act = () => Task.FromException<string>(new ArgumentException("x"));
+        var ex = await Assert.ThrowsAsync<AverException>(async () => await act.Should().NotThrowAsync("it is valid"));
+        Assert.EndsWith("Because it is valid.", ex.Message);
+    }
 }

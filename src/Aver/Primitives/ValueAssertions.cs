@@ -12,6 +12,8 @@ public readonly struct ValueAssertions<T> where T : struct
 
     public T Subject { get; }
 
+    internal string Name => Fail.Name(_expression);
+
     public AndConstraint<ValueAssertions<T>> Be(T expected)
     {
         if (!EqualityComparer<T>.Default.Equals(Subject, expected))
@@ -57,5 +59,29 @@ public readonly struct ValueAssertions<T> where T : struct
     {
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
         return new(this);
+    }
+
+    public AndConstraint<ValueAssertions<T>> Be(T expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<ValueAssertions<T>> NotBe(T unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
     }
 }

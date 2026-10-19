@@ -145,6 +145,30 @@ public readonly struct NullableNumericAssertions<T> where T : struct, INumber<T>
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
         return new(this);
     }
+
+    public AndConstraint<NullableNumericAssertions<T>> Be(T expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableNumericAssertions<T>> BeGreaterThan(T expected, string because)
+    {
+        try
+        {
+            return BeGreaterThan(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }
 
 public static class NullableNumericApproximationExtensions

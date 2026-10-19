@@ -67,4 +67,28 @@ public readonly struct AsyncFunctionAssertions
 
         return thrown;
     }
+
+    public async Task<ExceptionAssertions<TException>> ThrowAsync<TException>(string because) where TException : Exception
+    {
+        try
+        {
+            return await ThrowAsync<TException>().ConfigureAwait(false);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public async Task NotThrowAsync(string because)
+    {
+        try
+        {
+            await NotThrowAsync().ConfigureAwait(false);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }

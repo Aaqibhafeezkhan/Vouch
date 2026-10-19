@@ -52,4 +52,8 @@ public class DictionaryAssertionsTests
     [Fact] public void ContainKey_message_on_empty() { var d = new Dictionary<string, int>(); Assert.Equal("Expected d to contain key \"a\", but it was empty.", Message(() => d.Should().ContainKey("a"))); }
     [Fact] public void ContainKeys_message_on_empty() { var d = new Dictionary<string, int>(); Assert.Equal("Expected d to contain keys [\"a\"], but it is missing [\"a\"].", Message(() => d.Should().ContainKeys("a"))); }
     [Fact] public void ContainKey_sees_the_live_dictionary() { var d = Sample(); var a = d.Should(); d["z"] = 9; a.ContainKey("z"); }
+
+    [Fact] public void ContainKey_WhoseValue_is_the_value() => Assert.Equal(2, Sample().Should().ContainKey("b").WhoseValue);
+    [Fact] public void ContainKey_WhoseValue_chains_into_an_assertion() => Sample().Should().ContainKey("b").WhoseValue.Should().Be(2);
+    [Fact] public void ContainKey_WhoseValue_matches_Which() { var found = Sample().Should().ContainKey("a"); Assert.Equal(found.Which, found.WhoseValue); }
 }

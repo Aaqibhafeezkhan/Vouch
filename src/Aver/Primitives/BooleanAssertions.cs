@@ -36,6 +36,54 @@ public readonly struct BooleanAssertions
         return new(this);
     }
 
+    public AndConstraint<BooleanAssertions> BeTrue(string because)
+    {
+        try
+        {
+            return BeTrue();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<BooleanAssertions> BeFalse(string because)
+    {
+        try
+        {
+            return BeFalse();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<BooleanAssertions> Be(bool expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<BooleanAssertions> NotBe(bool unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
     private static string Word(bool value) => value ? "true" : "false";
 }
 
@@ -94,6 +142,78 @@ public readonly struct NullableBooleanAssertions
         }
 
         return new(this, value);
+    }
+
+    public AndConstraint<NullableBooleanAssertions> BeTrue(string because)
+    {
+        try
+        {
+            return BeTrue();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableBooleanAssertions> BeFalse(string because)
+    {
+        try
+        {
+            return BeFalse();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableBooleanAssertions> Be(bool expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableBooleanAssertions> NotBe(bool unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableBooleanAssertions> BeNull(string because)
+    {
+        try
+        {
+            return BeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<NullableBooleanAssertions, bool> NotBeNull(string because)
+    {
+        try
+        {
+            return NotBeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
     }
 
     private static string Word(bool? value) => value is null ? "null" : value.Value ? "true" : "false";

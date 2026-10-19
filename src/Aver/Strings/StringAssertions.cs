@@ -268,4 +268,258 @@ public readonly struct StringAssertions
 
         return new(this);
     }
+
+    public AndConstraint<StringAssertions> Be(string? expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotBe(string? unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> BeEmpty(string because)
+    {
+        try
+        {
+            return BeEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotBeEmpty(string because)
+    {
+        try
+        {
+            return NotBeEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> BeNull(string because)
+    {
+        try
+        {
+            return BeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotBeNull(string because)
+    {
+        try
+        {
+            return NotBeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> BeNullOrEmpty(string because)
+    {
+        try
+        {
+            return BeNullOrEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotBeNullOrEmpty(string because)
+    {
+        try
+        {
+            return NotBeNullOrEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotBeNullOrWhiteSpace(string because)
+    {
+        try
+        {
+            return NotBeNullOrWhiteSpace();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> StartWith(string expected, string because)
+    {
+        try
+        {
+            return StartWith(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotStartWith(string unexpected, string because)
+    {
+        try
+        {
+            return NotStartWith(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> EndWith(string expected, string because)
+    {
+        try
+        {
+            return EndWith(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> Contain(string expected, string because)
+    {
+        try
+        {
+            return Contain(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotContain(string unexpected, string because)
+    {
+        try
+        {
+            return NotContain(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> Match(string wildcardPattern, string because)
+    {
+        try
+        {
+            return Match(wildcardPattern);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> MatchRegex(string pattern, string because)
+    {
+        try
+        {
+            return MatchRegex(pattern);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> HaveLength(int expected, string because)
+    {
+        try
+        {
+            return HaveLength(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> BeEquivalentTo(string expected, string because)
+    {
+        try
+        {
+            return BeEquivalentTo(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> BeOneOf(IEnumerable<string?> validValues, string because)
+    {
+        ArgumentNullException.ThrowIfNull(validValues);
+        var values = validValues.ToArray();
+        try
+        {
+            return BeOneOf(values);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<StringAssertions> NotContainEquivalentOf(string unexpected)
+    {
+        ArgumentNullException.ThrowIfNull(unexpected);
+
+        if (Subject is null || Subject.Contains(unexpected, StringComparison.OrdinalIgnoreCase))
+        {
+            Fail.With($"Expected {Name} not to contain {Formatter.Format(unexpected)} (ignoring case), but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<StringAssertions> NotContainEquivalentOf(string unexpected, string because)
+    {
+        try
+        {
+            return NotContainEquivalentOf(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }

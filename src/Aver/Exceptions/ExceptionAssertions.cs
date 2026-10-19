@@ -10,6 +10,8 @@ public sealed class ExceptionAssertions<TException> where TException : Exception
         _name = name;
     }
 
+    internal string Name => _name;
+
     public TException Which { get; }
 
     public TException Subject => Which;

@@ -734,4 +734,273 @@ public abstract class CollectionAssertionsBase<T, TSelf>
             sb.Append("\n  ... (").Append(more).Append(" more)");
         }
     }
+
+    public AndConstraint<TSelf> BeEmpty(string because)
+    {
+        try
+        {
+            return BeEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> NotBeEmpty(string because)
+    {
+        try
+        {
+            return NotBeEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> BeNull(string because)
+    {
+        try
+        {
+            return BeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> NotBeNull(string because)
+    {
+        try
+        {
+            return NotBeNull();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> HaveCount(int expected, string because)
+    {
+        try
+        {
+            return HaveCount(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> Contain(T expected, string because)
+    {
+        try
+        {
+            return Contain(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> Contain(IEnumerable<T> expected, string because)
+    {
+        try
+        {
+            return Contain(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> Contain(Expression<Func<T, bool>> predicate, string because)
+    {
+        try
+        {
+            return Contain(predicate);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> NotContain(T unexpected, string because)
+    {
+        try
+        {
+            return NotContain(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> NotContain(IEnumerable<T> unexpected, string because)
+    {
+        try
+        {
+            return NotContain(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> NotContain(Expression<Func<T, bool>> predicate, string because)
+    {
+        try
+        {
+            return NotContain(predicate);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> ContainSingle(string because)
+    {
+        try
+        {
+            return ContainSingle();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndWhichConstraint<TSelf, T> ContainSingle(Expression<Func<T, bool>> predicate, string because)
+    {
+        try
+        {
+            return ContainSingle(predicate);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> OnlyContain(Expression<Func<T, bool>> predicate, string because)
+    {
+        try
+        {
+            return OnlyContain(predicate);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> Equal(IEnumerable<T> expected, string because)
+    {
+        try
+        {
+            return Equal(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> BeEquivalentTo<TExpectation>(IEnumerable<TExpectation> expectation, string because)
+    {
+        try
+        {
+            return BeEquivalentTo<TExpectation>(expectation);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> BeNullOrEmpty()
+    {
+        if (!IsNull && Count != 0)
+        {
+            var items = Items;
+            Fail.With($"Expected {Name} to be null or empty, but found {Plural(items.Count)}{Listing(items)}");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> BeNullOrEmpty(string because)
+    {
+        try
+        {
+            return BeNullOrEmpty();
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<TSelf> BeSameAs(IEnumerable<T> expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        if (IsNull)
+        {
+            FailNull($"to refer to {Formatter.Format(expected)}");
+        }
+
+        if (!ReferenceEquals(Source, expected))
+        {
+            Fail.With($"Expected {Name} to refer to {Formatter.Format(expected)}, but found another collection: {Formatter.Format(Items)}.");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> EndWith(IEnumerable<T> expected)
+    {
+        ArgumentNullException.ThrowIfNull(expected);
+        var tail = Materialise(expected);
+        if (IsNull)
+        {
+            FailNull($"to end with {Formatter.Format(tail)}");
+        }
+
+        var items = Items;
+        var offset = items.Count - tail.Count;
+        var comparer = EqualityComparer<T>.Default;
+        var matches = offset >= 0;
+        for (var i = 0; matches && i < tail.Count; i++)
+        {
+            matches = comparer.Equals(items[offset + i], tail[i]);
+        }
+
+        if (!matches)
+        {
+            Fail.With($"Expected {Name} to end with {Formatter.Format(tail)}, but found {Formatter.Format(items)}.");
+        }
+
+        return And();
+    }
+
+    public AndConstraint<TSelf> BeInAscendingOrder(IComparer<T> comparer)
+    {
+        ArgumentNullException.ThrowIfNull(comparer);
+        return InOrder(comparer, "ascending", false);
+    }
+
+    public AndConstraint<TSelf> BeInDescendingOrder(IComparer<T> comparer)
+    {
+        ArgumentNullException.ThrowIfNull(comparer);
+        return InOrder(comparer, "descending", true);
+    }
 }

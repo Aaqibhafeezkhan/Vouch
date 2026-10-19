@@ -277,4 +277,32 @@ public class CollectionAssertionsTests
     [Fact] public void BeInDescendingOrder_non_comparable_fails_cleanly() { var xs = new[] { new Opaque(), new Opaque() }; Assert.Equal("Expected xs to be in descending order, but Opaque is not comparable.", Message(() => xs.Should().BeInDescendingOrder())); }
     [Fact] public void BeInAscendingOrder_non_comparable_key_fails_cleanly() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to be in ascending order, but Opaque is not comparable.", Message(() => xs.Should().BeInAscendingOrder(_ => new Opaque()))); }
     [Fact] public void BeInDescendingOrder_non_comparable_key_fails_cleanly() { var xs = new[] { 1, 2 }; Assert.Equal("Expected xs to be in descending order, but Opaque is not comparable.", Message(() => xs.Should().BeInDescendingOrder(_ => new Opaque()))); }
+
+    [Fact] public void BeSameAs_passes_on_the_same_instance() { var xs = new List<int> { 1 }; xs.Should().BeSameAs(xs); }
+    [Fact] public void BeSameAs_fails_on_an_equal_copy() { var xs = new List<int> { 1 }; Assert.Throws<AverException>(() => xs.Should().BeSameAs(new List<int> { 1 })); }
+    [Fact] public void BeSameAs_message() { var xs = new List<int> { 1 }; var ys = new List<int> { 2 }; Assert.Equal("Expected xs to refer to [2], but found another collection: [1].", Message(() => xs.Should().BeSameAs(ys))); }
+    [Fact] public void BeSameAs_fails_on_a_null_subject() { List<int>? xs = null; Assert.Equal("Expected xs to refer to [2], but found null.", Message(() => xs.Should().BeSameAs(new List<int> { 2 }))); }
+    [Fact] public void BeSameAs_null_expected_throws_ArgumentNullException() { var xs = new List<int> { 1 }; Assert.Throws<ArgumentNullException>(() => xs.Should().BeSameAs(null!)); }
+
+    [Fact] public void EndWith_passes_on_the_trailing_items() { new[] { 1, 2, 3 }.Should().EndWith(new[] { 2, 3 }); }
+    [Fact] public void EndWith_passes_on_the_whole_sequence_and_on_none() { var xs = new[] { 1, 2 }; xs.Should().EndWith(new[] { 1, 2 }); xs.Should().EndWith(Array.Empty<int>()); }
+    [Fact] public void EndWith_fails_on_a_different_tail() { var xs = new[] { 1, 2, 3 }; Assert.Throws<AverException>(() => xs.Should().EndWith(new[] { 1, 3 })); }
+    [Fact] public void EndWith_fails_when_the_expected_is_longer() { var xs = new[] { 2, 3 }; Assert.Throws<AverException>(() => xs.Should().EndWith(new[] { 1, 2, 3 })); }
+    [Fact] public void EndWith_message() { var xs = new[] { 1, 2, 3 }; Assert.Equal("Expected xs to end with [1, 3], but found [1, 2, 3].", Message(() => xs.Should().EndWith(new[] { 1, 3 }))); }
+    [Fact] public void EndWith_fails_on_a_null_subject() { int[]? xs = null; Assert.Equal("Expected xs to end with [1], but found null.", Message(() => xs.Should().EndWith(new[] { 1 }))); }
+    [Fact] public void EndWith_null_expected_throws_ArgumentNullException() { var xs = new[] { 1 }; Assert.Throws<ArgumentNullException>(() => xs.Should().EndWith(null!)); }
+    [Fact] public void EndWith_reads_a_one_shot_sequence_once() { var reads = 0; IEnumerable<int> Tail() { reads++; yield return 3; } new[] { 1, 2, 3 }.Should().EndWith(Tail()); Assert.Equal(1, reads); }
+
+    [Fact] public void BeNullOrEmpty_passes_on_null_and_empty() { List<int>? none = null; none.Should().BeNullOrEmpty(); new List<int>().Should().BeNullOrEmpty(); }
+    [Fact] public void BeNullOrEmpty_fails_on_items() { var xs = new List<int> { 1 }; Assert.Throws<AverException>(() => xs.Should().BeNullOrEmpty()); }
+    [Fact] public void BeNullOrEmpty_message() { var xs = new List<int> { 1, 2 }; Assert.Equal("Expected xs to be null or empty, but found 2 items:\n  [0] 1\n  [1] 2", Message(() => xs.Should().BeNullOrEmpty())); }
+    [Fact] public void BeNullOrEmpty_works_on_a_dictionary() { Dictionary<string, int>? none = null; none.Should().BeNullOrEmpty(); new Dictionary<string, int>().Should().BeNullOrEmpty(); Assert.Throws<AverException>(() => new Dictionary<string, int> { ["a"] = 1 }.Should().BeNullOrEmpty()); }
+
+    [Fact] public void BeInAscendingOrder_by_comparer_passes() { new[] { "a", "B", "c" }.Should().BeInAscendingOrder(StringComparer.OrdinalIgnoreCase); }
+    [Fact] public void BeInAscendingOrder_by_comparer_uses_the_comparer() { var xs = new[] { "a", "B", "c" }; Assert.Throws<AverException>(() => xs.Should().BeInAscendingOrder(StringComparer.Ordinal)); }
+    [Fact] public void BeInAscendingOrder_by_comparer_message() { var xs = new[] { "a", "B", "c" }; Assert.Equal("Expected xs to be in ascending order, but [1] \"B\" comes after [0] \"a\".", Message(() => xs.Should().BeInAscendingOrder(StringComparer.Ordinal))); }
+    [Fact] public void BeInAscendingOrder_by_comparer_chains() { new[] { "a", "b" }.Should().BeInAscendingOrder(StringComparer.Ordinal).And.OnlyHaveUniqueItems(); }
+    [Fact] public void BeInAscendingOrder_by_comparer_null_throws_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { "a" }.Should().BeInAscendingOrder((IComparer<string>)null!)); }
+    [Fact] public void BeInDescendingOrder_by_comparer_passes_and_fails() { new[] { "c", "B", "a" }.Should().BeInDescendingOrder(StringComparer.OrdinalIgnoreCase); var xs = new[] { "a", "b" }; Assert.Equal("Expected xs to be in descending order, but [1] \"b\" comes after [0] \"a\".", Message(() => xs.Should().BeInDescendingOrder(StringComparer.Ordinal))); }
+    [Fact] public void BeInDescendingOrder_by_comparer_null_throws_ArgumentNullException() { Assert.Throws<ArgumentNullException>(() => new[] { "a" }.Should().BeInDescendingOrder((IComparer<string>)null!)); }
 }

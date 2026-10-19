@@ -82,4 +82,55 @@ public readonly struct NullableValueAssertions<T> where T : struct
         Equivalency.Require(Subject, expectation, typeof(TExpectation), options, Fail.Name(_expression));
         return new(this);
     }
+
+    public AndConstraint<NullableValueAssertions<T>> Be(T expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableValueAssertions<T>> NotBe(T unexpected, string because)
+    {
+        try
+        {
+            return NotBe(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<NullableValueAssertions<T>> Be(T? expected)
+    {
+        if (expected is { } value)
+        {
+            return Be(value);
+        }
+
+        if (Subject is not null)
+        {
+            Fail.With($"Expected {Fail.Name(_expression)} to be null, but found {Formatter.Format(Subject)}.");
+        }
+
+        return new(this);
+    }
+
+    public AndConstraint<NullableValueAssertions<T>> Be(T? expected, string because)
+    {
+        try
+        {
+            return Be(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }

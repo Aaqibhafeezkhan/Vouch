@@ -94,4 +94,28 @@ public sealed class DictionaryAssertions<TKey, TValue>
         value = default;
         return false;
     }
+
+    public AndWhichConstraint<DictionaryAssertions<TKey, TValue>, TValue> ContainKey(TKey expected, string because)
+    {
+        try
+        {
+            return ContainKey(expected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
+
+    public AndConstraint<DictionaryAssertions<TKey, TValue>> NotContainKey(TKey unexpected, string because)
+    {
+        try
+        {
+            return NotContainKey(unexpected);
+        }
+        catch (AverException failure)
+        {
+            throw Reason.Add(failure, because);
+        }
+    }
 }
