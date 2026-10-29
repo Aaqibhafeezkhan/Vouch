@@ -1,73 +1,162 @@
 name: Publish to NuGet
 
+# Version comes from <Version> in src/Vouch/Vouch.csproj, never from a
+# hand-typed input, so the published version is always recorded in git.
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
-      version:
-        description: "Version to publish (e.g., 0.1.0)"
-        required: true
-        type: string
+      dry_run:
+        description: "Build and pack without publishing"
+        type: boolean
+        default: true
+
+concurrency:
+  group: publish
+  cancel-in-progress: false
 
 jobs:
-  publish:
+  # Builds, tests and packs. Runs branch code, so it gets no token that can
+  # publish anything.
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-    env:
-      VERSION: ${{ github.event.inputs.version }}
-      GH_TOKEN: ${{ github.token }}
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history, so the guard can check the tag is on main.
+          fetch-depth: 0
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: |
             8.0.x
             10.0.x
 
-      - name: Check version matches the csproj
+      - name: Read version from source
+        id: version
         run: |
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
-            echo "::error::not a version number: $VERSION"
-            exit 1
-          fi
-          csproj=$(grep -oP '(?<=<Version>)[^<]+' src/Vouch/Vouch.csproj)
-          if [ "$csproj" != "$VERSION" ]; then
-            echo "::error::input version $VERSION does not match csproj $csproj"
-            exit 1
-          fi
+          VERSION=$(grep -oP '(?<=<Version>)[^<]+' src/Vouch/Vouch.csproj)
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Version from Vouch.csproj: $VERSION"
+
+      # Runs unconditionally. A publish that is not from a tag fails here rather
+      # than silently skipping the push step and looking like a success.
+      - name: Confirm this publish is from a matching tag
+        env:
+          TAG: ${{ github.ref_name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          IS_TAG: ${{ startsWith(github.ref, 'refs/tags/v') }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
           if ! grep -q "^## $VERSION\$" CHANGELOG.md; then
             echo "::error::CHANGELOG.md has no section for $VERSION"
-            exit 1
+            if [ "$IS_TAG" = "true" ]; then exit 1; fi
           fi
 
-      - name: Restore & build
-        run: |
-          dotnet restore
-          dotnet build src/Vouch/Vouch.csproj --configuration Release --no-restore /p:Version="$VERSION"
+          if [ "$IS_TAG" = "true" ]; then
+            if [ "$TAG" != "v$VERSION" ]; then
+              echo "::error::Tag $TAG does not match csproj version $VERSION"
+              exit 1
+            fi
+            echo "Tag $TAG matches csproj version $VERSION."
+            # A tag can point at any commit, so also require that it is on main.
+            git fetch --quiet --no-tags origin main
+            if ! git merge-base --is-ancestor "$GITHUB_SHA" FETCH_HEAD; then
+              echo "::error::Tag $TAG points at $GITHUB_SHA, which is not on main"
+              exit 1
+            fi
+            exit 0
+          fi
 
+          # Not a tag. Packing and dry running is fine; publishing is not.
+          if [ "$DRY_RUN" = "false" ]; then
+            echo "::error::Refusing to publish from $GITHUB_REF. Push a v$VERSION tag instead."
+            exit 1
+          fi
+          echo "Not a tag, and dry_run is on. Packing only."
+
+      - run: dotnet restore
+
+      - run: dotnet build --configuration Release --no-restore
+
+      # A package must never ship without its tests having run.
       - name: Test
-        run: dotnet test --configuration Release
+        run: dotnet test --configuration Release --no-build
 
       - name: Pack
-        run: dotnet pack src/Vouch/Vouch.csproj --configuration Release --no-build --output ./nupkgs /p:Version="$VERSION"
+        run: dotnet pack src/Vouch/Vouch.csproj --configuration Release --no-build --output ./nupkgs
 
-      - name: Check for NuGet API key
-        run: |
-          if [ -z "${{ secrets.NUGET_API_KEY }}" ]; then
-            echo "::error::NUGET_API_KEY secret is not set (org or repo)."
-            exit 1
-          fi
+      - name: List artifacts
+        run: ls -la ./nupkgs
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nupkgs
+          path: ./nupkgs/*
+
+  # Only this job can mint a NuGet key. It runs on a v* tag only, never checks
+  # out or runs repo code, and pushes the package the build job tested. The
+  # nuget environment and the trusted publishing policy both name it.
+  publish:
+    needs: build
+    if: ${{ startsWith(github.ref, 'refs/tags/v') && !inputs.dry_run }}
+    runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: nupkgs
+          path: ./nupkgs
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Exchange OIDC token for a short-lived NuGet key
+        id: nuget_login
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        with:
+          user: ${{ vars.NUGET_USER || 'arnelirobles' }}
 
       - name: Publish
-        run: dotnet nuget push ./nupkgs/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate
-
-      - name: Tag and release
+        env:
+          NUGET_API_KEY: ${{ steps.nuget_login.outputs.NUGET_API_KEY }}
         run: |
+          if [ -z "$NUGET_API_KEY" ]; then
+            echo "::error::No API key returned. Check the trusted publishing policy on nuget.org." && exit 1
+          fi
+          dotnet nuget push ./nupkgs/*.nupkg \
+            --api-key "$NUGET_API_KEY" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+
+  # Separate job so the token that can write releases is never in the
+  # environment while branch test code runs. Skipped whenever publish is.
+  release:
+    needs: [build, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" > /dev/null 2>&1; then
+            echo "Release v$VERSION already exists."
+            exit 0
+          fi
           awk -v v="$VERSION" '$0 == "## " v { on = 1; next } /^## / { on = 0 } on' CHANGELOG.md > release-notes.md
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag -a "v$VERSION" -m "Release v$VERSION"
-          git push origin "v$VERSION"
           gh release create "v$VERSION" --title "Vouch v$VERSION" --notes-file release-notes.md
