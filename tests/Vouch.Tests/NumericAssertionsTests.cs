@@ -135,4 +135,40 @@ public class NumericAssertionsTests
     [Fact] public void Opposite_infinities_do_not_approximate() { double d = double.PositiveInfinity; Assert.Throws<VouchException>(() => d.Should().BeApproximately(double.NegativeInfinity, 1)); }
     [Fact] public void Float_BeApproximately_fails() { Assert.Throws<VouchException>(() => 1.75f.Should().BeApproximately(1.5f, 0.125f)); }
     [Fact] public void Float_BeApproximately_message() { var f = 1.75f; Assert.Equal("Expected f to approximate 1.5f +/- 0.125f, but found 1.75f (off by 0.25f).", Message(() => f.Should().BeApproximately(1.5f, 0.125f))); }
+
+    [Fact]
+    public void Double_NaN_fails_every_ordering_on_either_side()
+    {
+        var n = double.NaN;
+        Assert.Throws<VouchException>(() => n.Should().BeLessThan(1.0));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThan(1.0));
+        Assert.Throws<VouchException>(() => n.Should().BeLessThanOrEqualTo(1.0));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThanOrEqualTo(1.0));
+        Assert.Throws<VouchException>(() => n.Should().BeInRange(0.0, 1.0));
+        var one = 1.0;
+        Assert.Throws<VouchException>(() => one.Should().BeLessThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeLessThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => one.Should().BeInRange(n, 2.0));
+        Assert.Throws<VouchException>(() => one.Should().BeInRange(0.0, n));
+    }
+
+    [Fact]
+    public void Float_NaN_fails_every_ordering_on_either_side()
+    {
+        var n = float.NaN;
+        Assert.Throws<VouchException>(() => n.Should().BeLessThan(1f));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThan(1f));
+        Assert.Throws<VouchException>(() => n.Should().BeLessThanOrEqualTo(1f));
+        Assert.Throws<VouchException>(() => n.Should().BeGreaterThanOrEqualTo(1f));
+        Assert.Throws<VouchException>(() => n.Should().BeInRange(0f, 1f));
+        var one = 1f;
+        Assert.Throws<VouchException>(() => one.Should().BeLessThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThan(n));
+        Assert.Throws<VouchException>(() => one.Should().BeLessThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => one.Should().BeGreaterThanOrEqualTo(n));
+        Assert.Throws<VouchException>(() => one.Should().BeInRange(n, 2f));
+        Assert.Throws<VouchException>(() => one.Should().BeInRange(0f, n));
+    }
 }

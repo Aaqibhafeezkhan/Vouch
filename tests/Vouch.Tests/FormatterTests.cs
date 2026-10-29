@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text;
 using Xunit;
 
 namespace Vouch.Tests;
@@ -9,6 +10,13 @@ public class Node { public Node? Next { get; set; } }
 public class Pair { public Node? A { get; set; } public Node? B { get; set; } }
 public class Bad { public int Value => throw new InvalidOperationException(); }
 public class BadToString { public override string ToString() => throw new InvalidOperationException(); }
+public sealed class ReadOnlyOnly(int count) : IReadOnlyCollection<int>
+{
+    public int Count => count;
+    public IEnumerator<int> GetEnumerator() => Enumerable.Range(0, count).GetEnumerator();
+    System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+}
+
 public class Named { public override string ToString() => "named!"; }
 public class Chain { public Chain? Inner { get; set; } }
 public enum Status { Active, Closed, Draft }
@@ -75,8 +83,30 @@ public class FormatterTests
     {
         _moves = 0;
         var text = Formatter.Format(Counting(1_000_000));
-        Assert.True(_moves <= 100_011, $"enumerated {_moves}");
-        Assert.EndsWith("(100000+ more)]", text);
+        Assert.True(_moves < 1_000, $"enumerated {_moves}");
+        Assert.EndsWith(", ... (more)]", text);
+    }
+
+    [Fact]
+    public void Sequence_of_exactly_ten_has_no_tail()
+    {
+        _moves = 0;
+        Assert.Equal("[0, 1, 2, 3, 4, 5, 6, 7, 8, 9]", Formatter.Format(Counting(10)));
+    }
+
+    [Fact] public void Read_only_collection_reports_exact_count() => Assert.EndsWith("... (90 more)]", Formatter.Format(new ReadOnlyOnly(100)));
+    [Fact] public void Generic_collection_reports_exact_count() => Assert.EndsWith("... (90 more)]", Formatter.Format(new HashSet<int>(Enumerable.Range(0, 100))));
+    [Fact] public void Array_reports_exact_count() => Assert.EndsWith("... (90 more)]", Formatter.Format(Enumerable.Range(0, 100).ToArray()));
+    [Fact] public void Huge_ToString_is_cut() => Assert.Equal(200 + "... (9999800 more chars)".Length, Formatter.Format(new StringBuilder().Append('x', 10_000_000)).Length);
+    [Fact] public void Short_ToString_is_not_cut() => Assert.Equal("named!", Formatter.Format(new Named()));
+
+    [Fact]
+    public void Failure_message_for_huge_ToString_is_capped()
+    {
+        var a = new StringBuilder().Append('a', 10_000_000);
+        var b = new StringBuilder().Append('b', 10_000_000);
+        var ex = Assert.Throws<VouchException>(() => a.Should().Be(b));
+        Assert.True(ex.Message.Length < 100 * 1024, $"message was {ex.Message.Length} chars");
     }
 
     [Fact] public void Big_list_reports_exact_count() => Assert.EndsWith("... (100000 more)]", Formatter.Format(Enumerable.Range(0, 100_010).ToList()));
@@ -89,6 +119,29 @@ public class FormatterTests
         var finished = await Task.WhenAny(format, Task.Delay(TimeSpan.FromSeconds(5)));
         Assert.Same(format, finished);
         Assert.Equal("Task<Int32> { Status = WaitingForActivation }", await format);
+    }
+
+    [Fact]
+    public void Cut_does_not_split_a_surrogate_pair()
+    {
+        var text = new string('a', 199) + "\U0001F600" + "more text";
+        var output = Formatter.Format(text);
+        var quoted = output.Substring(1, output.IndexOf("...", StringComparison.Ordinal) - 1);
+        Assert.False(char.IsHighSurrogate(quoted[^1]));
+        Assert.Equal(199, quoted.Length);
+    }
+
+    [Fact]
+    public void ToString_cut_does_not_split_a_surrogate_pair()
+    {
+        var output = Formatter.Format(new Texty(new string('a', 199) + "\U0001F600" + "more text"));
+        var kept = output.Substring(0, output.IndexOf("...", StringComparison.Ordinal));
+        Assert.False(char.IsHighSurrogate(kept[^1]));
+    }
+
+    private sealed class Texty(string text)
+    {
+        public override string ToString() => text;
     }
 
     [Fact] public void Lazy_is_not_evaluated() => Assert.Equal("Lazy<Int32> { IsValueCreated = false }", Formatter.Format(new Lazy<int>(() => throw new InvalidOperationException())));
